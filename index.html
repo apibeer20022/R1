@@ -4,22 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบคลังข้อสอบวิชารังสีเทคนิค (2564 - 2566)</title>
+    <!-- Tailwind CSS สำหรับการตกแต่งที่สวยงามและรองรับมือถือ -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome สำหรับ Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght=300;400;500;600;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800">
 
+    <!-- Header -->
     <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-2">
                 <i class="fa-solid fa-microscope text-cyan-300"></i>
                 คลังข้อสอบและคลังเฉลยวิชารังสีเทคนิค
             </h1>
+            <!-- ตัวเลือกสลับชุดข้อสอบ -->
             <div class="flex gap-2">
                 <button onclick="switchYear('64')" id="btn-64" class="year-btn px-4 py-2 rounded-lg font-semibold bg-white text-blue-700 shadow-md">ปี 2564</button>
                 <button onclick="switchYear('65')" id="btn-65" class="year-btn px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500">ปี 2565</button>
@@ -28,28 +32,35 @@
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="max-w-5xl mx-auto px-4 py-8">
-        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded shadow-sm text-sm">
-            <p class="font-bold text-amber-800 flex items-center gap-2">
-                <i class="fa-solid fa-triangle-exclamation"></i> คำแนะนำสำหรับนักพัฒนา (GitHub Deployment)
-            </p>
-            <p class="text-amber-700 mt-1">
-                โปรดอย่าลืมนำไฟล์นี้ไปใส่ <b>Firebase Config API Key</b> ของคุณเองในส่วนท้ายของไฟล์โค้ด (บรรทัดที่ 1070 เป็นต้นไป) เพื่อเชื่อมต่อฐานข้อมูลและเปิดใช้ปุ่มแก้ไขเฉลยให้สมบูรณ์ครับ! หัวข้อข้อสอบจะถูกดึงข้อมูลเริ่มต้นจากตัวแปรในแอป และจะอัปเดตแบบเรียลไทม์ทันทีเมื่อมีคนกดแก้ไขระบบหลังบ้าน
-            </p>
+        
+        <!-- แถบเครื่องมือช่วยฝึกฝน (สุ่มข้อสอบ) -->
+        <div class="bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-gray-600">
+                <i class="fa-solid fa-graduation-cap text-blue-500 mr-1"></i>
+                <b>โหมดฝึกฝน:</b> ระบบจะซ่อนเฉลยไว้ ให้คลิกเลือกตัวเลือกแล้วกดตรวจคำตอบเพื่อดูเฉลยรายข้อครับ 🎯
+            </div>
+            <button onclick="randomizeQuestions()" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition-all transform active:scale-95">
+                <i class="fa-solid fa-shuffle animate-spin-slow"></i> สุ่มลำดับข้อสอบและช้อยส์ (Random) 🎲
+            </button>
         </div>
 
+        <!-- โซนแสดงปีปัจจุบัน -->
         <div class="mb-6 flex justify-between items-center">
             <h2 id="current-year-title" class="text-2xl font-bold text-gray-700 border-b-4 border-blue-500 pb-2">ชุดข้อสอบประจำปี 2564</h2>
             <span class="text-sm bg-gray-200 px-3 py-1 rounded-full font-medium" id="question-count">55 ข้อ</span>
         </div>
 
+        <!-- รายการข้อสอบจะถูกเรนเดอร์ตรงนี้ -->
         <div id="quiz-container" class="space-y-6"></div>
     </main>
 
+    <!-- Modal ฟอร์มสำหรับแก้ไขเฉลยข้อสอบ -->
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-fade-in">
             <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
-                <i class="fa-solid fa-pen-to-square text-blue-600"></i> แก้ไขเฉลยข้อสอบ
+                <i class="fa-solid fa-pen-to-square text-blue-600"></i> แก้ไขเฉลยข้อสอบหลังบ้าน
             </h3>
             <p id="modal-q-text" class="text-gray-600 text-sm mb-4 line-clamp-3 bg-gray-50 p-3 rounded border border-gray-200"></p>
             
@@ -58,9 +69,10 @@
                 <input type="hidden" id="modal-q-id">
 
                 <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">เลือกข้อเฉลยที่ถูกต้องใหม่:</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">เลือกข้อเฉลยที่ถูกต้องแท้จริงใหม่:</label>
                     <div class="space-y-2" id="modal-options-container">
-                        </div>
+                        <!-- ตัวเลือกวิทยุจะถูกแทรกที่นี่ -->
+                    </div>
                 </div>
 
                 <div class="mb-4">
@@ -78,11 +90,12 @@
         </div>
     </div>
 
+    <!-- Firebase SDK Scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
-        // 1. คลังข้อมูลข้อสอบชุดเริ่มต้น (ปี 2564, 2565, 2566) พร้อมข้อมูลเฉลย
+        // 1. คลังข้อมูลข้อสอบชุดเริ่มต้น
         const rawExamData = {
             "64": [
                 { id: 1, q: "ข้อต่อชนิดใดต่อไปนี้ที่พบว่ามีของเหลวอยู่ในบริเวณข้อต่อ", a: [ "Fibrous joint", "Synovial joint", "Socket joint", "Cartilaginous joint", "Gliding joint" ], ans: 2 },
@@ -156,7 +169,7 @@
                 { id: 13, q: "วัตถุประสงค์หลักของการนำค่า Exposure Index (EI) มาใช้ในระบบ Computed Radiography (CR) คือข้อใด", a: [ "เพื่อลดปริมาณการถ่ายภาพเอกซเรย์ซ้ำ", "เพื่อลดปริมาณรังสีให้กับผู้ปฏิบัติงาน", "เพื่อป้องกันไม่ให้ผู้ป่วยได้รับปริมาณรังสีมากเกินความจำเป็น (Exposure creep)", "เพื่อเพื่อให้ได้ภาพเอกซเรย์มีคุณภาพสูงสุด", "เพื่อแสดงปริมาณรังสีที่ผู้ป่วยได้รับโดยตรง" ], ans: 3 },
                 { id: 14, q: "Dynamic range ของ imaging plate ในระบบ CR มีลักษณะคล้ายกับส่วนใดของ X-ray film characteristic curve", a: [ "Shoulder", "Polarization", "Threshold", "Gamma", "Latitude" ], ans: 5 },
                 { id: 15, q: "ส่วนประกอบของ Image Intensifier ในเครื่องฟลูออโรสโคปี ทำหน้าที่เปลี่ยน Visible light เป็น Electron คือข้อใด", a: [ "Output phosphor", "Electrostatic focusing lens", "Input phosphor", "Photocathode", "Camera tube" ], ans: 4 },
-                { id: 16, q: "การตรวจ CT Brain ควรใช้ FOV ที่เหมาะสมประมาณ 20-25 cm หากปรับใช้ FOV มากกว่า 30 cm จะส่งผลอย่างไรต่อภาพ", a: [ "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice thickness", "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice collimation", "ระยะการเคลื่อนที่ของเตียง / Slice collimation", "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice interval", "ระยะการเคลื่อนที่ของเตียง / Slice thickness" ], ans: 2 },
+                { id: 16, q: "ค่า Beam Pitch ของเครื่อง MDCT ตรงกับนิยามในข้อใด", a: [ "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice thickness", "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice collimation", "ระยะการเคลื่อนที่ของเตียง / Slice collimation", "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice interval", "ระยะการเคลื่อนที่ของเตียง / Slice thickness" ], ans: 2 },
                 { id: 17, q: "การตรวจ CT Brain ควรใช้ FOV ที่เหมาะสมประมาณ 20-25 cm หากปรับใช้ FOV มากกว่า 30 cm จะส่งผลอย่างไรต่อภาพ", a: [ "ขนาดภาพ Brain เล็กลง รายละเอียดภาพแย่ลง (Spatial resolution ลดลง)", "ขนาดภาพ Brain ใหญ่ขึ้น รายละเอียดภาพดีขึ้น", "ขนาดภาพ Brain เล็กลง รายละเอียดภาพดีขึ้น", "ขนาดภาพ Brain ใหญ่ขึ้น รายละเอียดภาพแย่ลง", "ขนาดภาพ Brain เล็กลง รายละเอียดภาพเหมือนเดิม" ], ans: 1 },
                 { id: 18, q: "การถ่ายเอกซเรย์ AP Shoulder เพื่อให้เห็น Greater tubercle of humerus ชัดเจนที่สุด ควรจัดแขนของผู้ป่วยให้อยู่ในลักษณะใด", a: [ "Adduction", "Internal rotation", "Neutral rotation", "External rotation", "Abduction" ], ans: 4 },
                 { id: 19, q: "จากภาพ Ultrasound ช่องท้อง ความผิดปกติที่ลูกศรชี้คือข้อใด", a: [ "Gallbladder polyp", "Liver cyst", "Gallstone", "Calcified portal vein", "Liver calcification" ], ans: 3 },
@@ -237,7 +250,6 @@
                 { id: 36, q: "ปุ่มตำแหน่งอ้างอิงบนผิวร่างกาย (Bony landmark) ข้อใดที่วางตัวอยู่ตรงกับระดับของกระดูกสันหลังส่วนอกข้อ T4-T5", a: [ "Xiphoid process", "Vertebral prominence", "Sternal angle (มุมกระดูกอก)", "Suprasternal notch", "Iliac crest" ], ans: 3 },
                 { id: 37, q: "ข้อต่อที่อยู่ระหว่างกระดูกนิ้วมือชิ้นแรกส่วนต้น (Proximal phalanx) และส่วนปลาย (Distal phalanx) ของนิ้วหัวแม่มือ (Thumb) คือข้อใด", a: [ "Proximal interphalangeal joint", "Distal interphalangeal joint", "Carpometacarpal joint", "Interphalangeal joint (IP joint)", "Metacarpophalangeal joint" ], ans: 4 },
                 { id: 38, q: "การใช้งานเครื่อง Ultrasound ด้วยฟังก์ชันการทำงานแบบ Tissue Harmonic Imaging (THI) มีความเหมาะสมและช่วยเพิ่มประสิทธิภาพสูงสุดสำหรับการตรวจหารอยโรคในข้อใด", a: [ "Isoechoic lesion", "Stone", "Cyst", "Hyperechoic lesion", "Hemangioma" ], ans: 3 },
-                { id: 39, q: "ในการถ่ายภาพเอกซเรย์กระดูกและข้อขนาดเล็ก (Small bones and joints) ปัจจัยทางเทคนิคข้อใดต่อไปนี้มีผลกระทบต่อความคมชัดเชิงพื้นที่ (Image resolution) มากที่สุด", a: [ "kVp", "SID", "mAs", "Field size", "Focal spot size" ], ans: 5 },
                 { id: 40, q: "เจลสื่อคลื่นเสียง (Acoustic Gel) มีบทบาทหน้าที่ช่วยในการตรวจคลื่นความถี่สูง (Ultrasound) ในแง่ใดมากที่สุด", a: [ "ช่วยให้เสียงมีพลังงานมากขึ้น", "ช่วยเพิ่มความยาวของคลื่นมากขึ้น", "ช่วยให้คลื่นเสียงส่งผ่านรอยต่อ (Interface) ระหว่างหัวตรวจกับผิวหนังได้ดีโดยการไล่อากาศออก", "ช่วยเพิ่มการสะท้อนคลื่นเสียงมากขึ้น", "ช่วยให้คลื่นเสียงมีความถี่สูงขึ้น" ], ans: 3 },
                 { id: 41, q: "สัญญาณภาพฝังตัว (Latent image) ที่เกิดขึ้นบนแผ่น Imaging plate ของระบบ CR จะถูกอ่านสัญญาณออกมาเป็นข้อมูลภาพดิจิทัลได้โดยวิธีการใด", a: [ "กระตุ้นด้วยรังสีเอกซ์", "กระตุ้นด้วยแสงเลเซอร์ในช่วงคลื่นแสงสีแดง (Red laser)", "กระตุ้นด้วยความร้อน", "กระตุ้นด้วยเลเซอร์ช่วงสีน้ำเงิน", "กระตุ้นด้วยแสงธรรมดา" ], ans: 2 },
                 { id: 42, q: "ผู้ป่วยประสบอุบัติเหตุบริเวณข้อมือ หากต้องการถ่ายภาพรังสีเพื่อดูพยาธิสภาพหรือรอยแตกหักของกระดูก Scaphoid แต่พบว่าการถ่ายภาพท่าพื้นฐาน PA และ Lateral ยังไม่เห็นรอยหักชัดเจน ควรจัด Position ของมือเพิ่มเติมในท่าใด", a: [ "PA Radial deviation", "AP oblique", "PA oblique", "PA Ulnar deviation", "Carpal tunnel view" ], ans: 4 },
@@ -259,53 +271,47 @@
         };
 
         let activeYear = "64";
-        let liveExamData = JSON.parse(JSON.stringify(rawExamData)); // Clone ข้อมูลจำลองสำหรับใช้งานต้นแบบ
+        let liveExamData = JSON.parse(JSON.stringify(rawExamData)); // คัดลอกข้อมูลไว้ใช้เรนเดอร์สลับปี
+        let checkedQuestions = {}; // เก็บสถานะว่าข้อไหนบ้างที่ผู้ใช้กดตรวจคำตอบแล้ว
 
         // ==========================================================
-        // 2. ส่วนการตั้งค่าแอปพลิเคชัน FIREBASE
+        // 2. ส่วนการตั้งค่าแอปพลิเคชัน FIREBASE (ใส่คีย์ให้เบียร์เรียบร้อยแล้ว)
         // ==========================================================
-        // แนะนำ: ให้สร้างโปรเจกต์ Firebase และเปิดใช้งาน Realtime Database 
-        // จากนั้นให้นำ config ชุดของท่านมาแทนที่ข้อมูลจำลองด้านล่างนี้ได้เลยครับ
-       const firebaseConfig = {
-  apiKey: "AIzaSyBu8iYvplizZbFepIEv23lvBCag_UB2oT0",
-  authDomain: "ansr1-541e8.firebaseapp.com",
-  databaseURL: "https://ansr1-541e8-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ansr1-541e8",
-  storageBucket: "ansr1-541e8.firebasestorage.app",
-  messagingSenderId: "721916459887",
-  appId: "1:721916459887:web:0fade339a3c5213f8d469a",
-  measurementId: "G-9YRQH19NMN"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyBu8iYvplizZbFepIEvZ3lvBCag_UB2oT0",
+            authDomain: "ansr1-541e8.firebaseapp.com",
+            databaseURL: "https://ansr1-541e8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ansr1-541e8",
+            storageBucket: "ansr1-541e8.firebasestorage.app",
+            messagingSenderId: "721916459807",
+            appId: "1:721916459807:web:0fade339a3c5213f8d469a",
+            measurementId: "G-9YRQH19NMN"
+        };
 
         let isFirebaseConnected = false;
         let db;
 
-        // ดักจับข้อยกเว้นหากผู้ใช้เปิดรันไฟล์เฉยๆ โดยยังไม่เปลี่ยน API Key
         try {
-            if (firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY_HERE") {
+            if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY_HERE") {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 isFirebaseConnected = true;
-                console.log("🟢 เชื่อมต่อคลังข้อมูลหลัก Firebase Realtime Database สำเร็จ");
-            } else {
-                console.warn("🟡 วิ่งโหมดออฟไลน์: ระบบตรวจพบค่าคีย์จำลอง จะใช้หน่วยความจำเครื่องชั่วคราวแทน");
+                console.log("🟢 เชื่อมต่อฐานข้อมูลคลาวด์สำเร็จ");
             }
         } catch (error) {
-            console.error("🔴 เกิดข้อผิดพลาดในระบบการเชื่อมต่อคลาวด์: ", error);
+            console.error("🔴 เชื่อมต่อฐานข้อมูลไม่สำเร็จ: ", error);
         }
 
-        // เริ่มต้นโหลดระบบเมื่อเอกสารพร้อม
         window.onload = function() {
             if (isFirebaseConnected) {
-                // สมัครรับข้อมูลการอัปเดตเฉลยข้อสอบจากคลาวด์แบบ Realtime
                 db.ref("exams").on("value", (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        // อัปเดตข้อมูลในแอปพลิเคชันด้วยข้อมูลล่าสุดจาก Firebase
                         for (let yr in data) {
-                            if (liveExamData[yr]) {
+                            if (rawExamData[yr]) {
+                                // ซิงค์เฉลยจากเซิร์ฟเวอร์หลักเข้าคลังข้อสอบต้นฉบับ
                                 data[yr].forEach(updatedItem => {
-                                    let match = liveExamData[yr].find(o => o.id === updatedItem.id);
+                                    let match = rawExamData[yr].find(o => o.id === updatedItem.id);
                                     if (match) {
                                         match.ans = updatedItem.ans;
                                         match.updatedBy = updatedItem.updatedBy;
@@ -314,21 +320,65 @@
                                 });
                             }
                         }
+                        // โหลดข้อมูลล่าสุดใส่ live data
+                        resetCurrentYearData();
                     }
                     renderQuiz();
                 });
             } else {
+                resetCurrentYearData();
                 renderQuiz();
             }
         };
 
+        // รีเซ็ตเอาข้อมูลต้นฉบับมาใช้ (ใช้ตอนเปลี่ยนปี หรือยกเลิกการสุ่ม)
+        function resetCurrentYearData() {
+            liveExamData[activeYear] = JSON.parse(JSON.stringify(rawExamData[activeYear]));
+            // สร้างโครงสร้างเก็บค่าข้อความดั้งเดิมเพื่อใช้เช็กคำตอบตอนสุ่มช้อยส์
+            liveExamData[activeYear].forEach(item => {
+                item.originalChoices = [...item.a]; 
+            });
+            checkedQuestions = {};
+        }
+
         // ==========================================================
-        // 3. ฟังก์ชันระบบจัดการหน้าจอ (UI Logic)
+        // 3. ฟังก์ชันการสุ่มลำดับข้อสอบและช้อยส์ (Random Mode)
         // ==========================================================
-        
+        function randomizeQuestions() {
+            checkedQuestions = {}; // ล้างการตรวจคำตอบเดิมทั้งหมด
+            let list = liveExamData[activeYear];
+
+            // 1. สุ่มเรียงข้อใหม่ (Shuffle Questions)
+            for (let i = list.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [list[i], list[j]] = [list[j], list[i]];
+            }
+
+            // 2. สุ่มลำดับตัวเลือกภายในแต่ละข้อ (Shuffle Choices)
+            list.forEach(item => {
+                if (!item.originalChoices) {
+                    item.originalChoices = [...item.a]; // แบ็กอัปช้อยส์ดั้งเดิมไว้
+                }
+                
+                // เก็บข้อความเฉลยดั้งเดิมไว้ก่อนสุ่ม
+                const correctText = item.originalChoices[item.ans - 1];
+
+                // สุ่มสลับตัวเลือกในอาร์เรย์ item.a
+                for (let i = item.a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [item.a[i], item.a[j]] = [item.a[j], item.a[i]];
+                }
+
+                // คำนวณหาตำแหน่งดัชนี (Index) ใหม่ของเฉลยข้อนี้หลังจากสลับที่แล้ว
+                item.ans = item.a.indexOf(correctText) + 1;
+            });
+
+            renderQuiz();
+            alert("🎲 ระบบทำการสุ่มลำดับโจทย์และสับช้อยส์คำตอบให้ใหม่เรียบร้อยแล้วครับ ลองทำดูเลยเบียร์!");
+        }
+
         function switchYear(year) {
             activeYear = year;
-            // สลับสถานะของปุ่มด้านบน
             document.querySelectorAll('.year-btn').forEach(btn => {
                 btn.classList.remove('bg-white', 'text-blue-700', 'shadow-md');
                 btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-500');
@@ -337,11 +387,20 @@
             activeBtn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-500');
             activeBtn.classList.add('bg-white', 'text-blue-700', 'shadow-md');
 
-            // อัปเดตหัวข้อประจำปี
             document.getElementById('current-year-title').innerText = `ชุดข้อสอบประจำปี 25${year === '64' ? '64' : year === '65' ? '65' : '66'}`;
+            resetCurrentYearData();
             renderQuiz();
         }
 
+        // ฟังก์ชันเมื่อยูสเซอร์กดยืนยันตรวจคำตอบรายข้อ
+        function toggleCheckAnswer(itemId) {
+            checkedQuestions[itemId] = true;
+            renderQuiz(); // วาดหน้าจอใหม่เพื่อแสดงเฉลย
+        }
+
+        // ==========================================================
+        // 4. ส่วนเรนเดอร์หน้าจอ UI
+        // ==========================================================
         function renderQuiz() {
             const container = document.getElementById('quiz-container');
             container.innerHTML = "";
@@ -352,42 +411,66 @@
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-xl shadow-sm p-5 border border-gray-100 relative";
                 
-                // หัวข้อคำถาม
+                const isChecked = checkedQuestions[item.id] === true;
+
                 let html = `
-                    <div class="flex justify-between items-start gap-4 mb-3">
+                    <div class="flex justify-between items-center gap-4 mb-3 border-b border-gray-100 pb-2">
                         <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-md">ข้อที่ ${index + 1}</span>
-                        <button onclick="openEditModal('${activeYear}', ${item.id})" class="text-xs bg-gray-100 text-gray-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg font-medium border border-gray-200 flex items-center gap-1 transition-all">
-                            <i class="fa-solid fa-pen-to-square"></i> แก้ไขเฉลยข้อนี้ (Firebase)
+                        <button onclick="openEditModal('${activeYear}', ${item.id})" class="text-xs text-gray-400 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-all">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไขเฉลยต้นฉบับ
                         </button>
                     </div>
                     <p class="font-semibold text-gray-800 text-base mb-4">${item.q}</p>
                     <div class="grid grid-cols-1 gap-2 mb-4">
                 `;
 
-                // ตัวเลือกข้อสอบ 1 - 5
+                // วนลูปสร้างตัวเลือก 1-5
                 item.a.forEach((opt, oIdx) => {
-                    const isCorrect = (oIdx + 1) === item.ans;
-                    const badge = isCorrect 
-                        ? `<span class="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1 font-bold shadow-sm"><i class="fa-solid fa-check"></i> เฉลยข้อนี้</span>` 
-                        : '';
-                    const borderStyle = isCorrect ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 bg-gray-50';
+                    const currentOptionNum = oIdx + 1;
+                    const isCorrect = currentOptionNum === item.ans;
+                    
+                    let borderStyle = 'border-gray-200 bg-gray-50';
+                    let badge = '';
+
+                    // ถ้าผู้ใช้กดตรวจคำตอบแล้ว ให้แสดงสีเขียวไฮไลต์เฉลยที่ถูกต้อง
+                    if (isChecked) {
+                        if (isCorrect) {
+                            borderStyle = 'border-emerald-500 bg-emerald-50/70 font-semibold';
+                            badge = `<span class="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1 font-bold shadow-sm"><i class="fa-solid fa-check"></i> เฉลยข้อที่ถูก</span>`;
+                        }
+                    }
 
                     html += `
-                        <div class="border ${borderStyle} rounded-lg p-3 flex justify-between items-center text-sm">
-                            <span class="${isCorrect ? 'text-emerald-900 font-medium' : 'text-gray-700'}">${oIdx + 1}. ${opt}</span>
+                        <label class="border ${borderStyle} rounded-lg p-3 flex justify-between items-center text-sm cursor-pointer hover:bg-white transition-all">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="user_choice_${item.id}" value="${currentOptionNum}" ${isChecked ? 'disabled' : ''} class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                                <span class="text-gray-700">${opt}</span>
+                            </div>
                             ${badge}
-                        </div>
+                        </label>
                     `;
                 });
 
                 html += `</div>`;
 
-                // ท้ายข้อความแสดงประวัติผู้เขียนข้อมูลการแก้ไข
-                if (item.updatedBy) {
+                // แถบปุ่มส่งตรวจคำตอบรายข้อ
+                if (!isChecked) {
                     html += `
-                        <div class="mt-2 text-xs text-gray-400 bg-gray-50 rounded-lg p-2 flex items-center gap-2 border border-dashed border-gray-200">
+                        <div class="flex justify-end">
+                            <button onclick="toggleCheckAnswer(${item.id})" class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-sm transition-all">
+                                <i class="fa-solid fa-eye mr-1"></i> ตรวจคำตอบข้อนี้
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // ประวัติการแก้ไข (อิงข้อมูลจากเซิร์ฟเวอร์หลัก)
+                const originalItem = rawExamData[activeYear].find(o => o.id === item.id);
+                if (originalItem && originalItem.updatedBy) {
+                    html += `
+                        <div class="mt-3 text-[11px] text-gray-400 bg-gray-50 rounded-lg p-2 flex items-center gap-2 border border-dashed border-gray-200">
                             <i class="fa-solid fa-circle-info text-blue-400"></i>
-                            <span>แก้ไขล่าสุดโดยคุณ <b>${escapeHtml(item.updatedBy)}</b> เมื่อ ${item.updatedAt}</span>
+                            <span>เฉลยข้อนี้ถูกตรวจสอบ/แก้ไขโดยคลาวด์: คุณ <b>${escapeHtml(originalItem.updatedBy)}</b> (${originalItem.updatedAt})</span>
                         </div>
                     `;
                 }
@@ -398,11 +481,11 @@
         }
 
         // ==========================================================
-        // 4. ระบบจัดการข้อมูลส่วนการแก้ไข (Modal & Operations)
+        // 5. ระบบโมดอลแก้ไขข้อมูลยิงเข้าคลาวด์ (Firebase Logic)
         // ==========================================================
-        
         function openEditModal(year, id) {
-            const item = liveExamData[year].find(o => o.id === id);
+            // ดึงข้อมูลตามฐานข้อมูลดิบ (ช้อยส์จะไม่สลับลำดับทำให้ไม่สับสนเวลาแก้ไข)
+            const item = rawExamData[year].find(o => o.id === id);
             if (!item) return;
 
             document.getElementById('modal-year').value = year;
@@ -412,7 +495,6 @@
             const optionsContainer = document.getElementById('modal-options-container');
             optionsContainer.innerHTML = "";
 
-            // เรนเดอร์ช่อง Radio เพื่อเลือกคำตอบใหม่
             item.a.forEach((opt, oIdx) => {
                 const val = oIdx + 1;
                 const checked = val === item.ans ? 'checked' : '';
@@ -440,67 +522,46 @@
             const selectedRadio = document.querySelector('input[name="newAns"]:checked');
 
             if (!selectedRadio || !user) {
-                alert("กรุณากรอกข้อมูลและเลือกข้อเฉลยให้ครบถ้วนครับ ⚠️");
+                alert("กรุณากรอกข้อมูลให้ครบถ้วนครับ ⚠️");
                 return;
             }
 
             const newAnswerVal = parseInt(selectedRadio.value);
-            
-            // ตั้งค่าแสตมป์เวลาบันทึกภาษาไทย
             const now = new Date();
             const timestampStr = now.toLocaleDateString('th-TH', {
                 year: 'numeric', month: 'short', day: 'numeric'
-            }) + " เวลา " + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + " น.";
+            }) + " " + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + " น.";
 
             if (isFirebaseConnected) {
-                // ดึงข้อมูลภาพรวมล่าสุดเพื่ออัปเดตตำแหน่งอาร์เรย์ในโปรเจกต์ Firebase
                 db.ref(`exams/${year}`).once('value').then((snapshot) => {
                     let remoteItems = snapshot.val() || [];
                     let itemIdx = remoteItems.findIndex(o => o && o.id === id);
 
-                    // หากข้อมูลโครงสร้างใน Firebase ยังไม่เคยถูกสร้างขึ้น ให้ส่งโครงสร้างเริ่มต้นขึ้นไปก่อน
                     if (itemIdx === -1) {
-                        remoteItems = liveExamData[year];
+                        remoteItems = JSON.parse(JSON.stringify(rawExamData[year]));
                         itemIdx = remoteItems.findIndex(o => o.id === id);
                     }
 
-                    // ปรับแต่งค่าเฉพาะจุด
                     remoteItems[itemIdx].ans = newAnswerVal;
                     remoteItems[itemIdx].updatedBy = user;
                     remoteItems[itemIdx].updatedAt = timestampStr;
 
-                    // บันทึกกลับลงเซิร์ฟเวอร์ Firebase ของแท้
                     db.ref(`exams/${year}`).set(remoteItems)
                         .then(() => {
                             closeModal();
-                            alert("🎉 บันทึกข้อมูลและอัปเดตเฉลยในฐานข้อมูล Firebase เรียบร้อยแล้ว!");
+                            alert("🎉 บันทึกการแก้ไขเฉลยหลักลง Firebase สำเร็จแล้ว!");
                         })
                         .catch(err => {
-                            alert("เกิดข้อผิดพลาดในการเขียนลง Firebase: " + err.message);
+                            alert("เกิดข้อผิดพลาด: " + err.message);
                         });
                 });
             } else {
-                // โหมดรันแบบออฟไลน์สำรองชั่วคราวบนหน่วยความจำเครื่องหน้าเว็บ (Local Memory Backup)
-                let item = liveExamData[year].find(o => o.id === id);
-                if (item) {
-                    item.ans = newAnswerVal;
-                    item.updatedBy = user + " (โหมดออฟไลน์ Local)";
-                    item.updatedAt = timestampStr;
-                }
-                renderQuiz();
-                closeModal();
-                alert("👍 แก้ไขในหน่วยความจำเบราว์เซอร์ชั่วคราวเรียบร้อย (ระบบออฟไลน์อยู่ ข้อมูลจะรีเซ็ตหากกด Refresh)");
+                alert("ระบบไม่ได้เชื่อมต่อ Firebase ข้อมูลจะไม่ถูกบันทึกขึ้นระบบคลาวด์ครับ");
             }
         }
 
-        // ฟังก์ชันช่วยเข้ารหัสข้อความป้องกันการโจมตีประเภท XSS
         function escapeHtml(text) {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>
