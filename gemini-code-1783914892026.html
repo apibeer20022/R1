@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคลังข้อสอบวิชารังสีเทคนิค (2564 - 2566)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-microscope text-cyan-300"></i>
+                คลังข้อสอบและคลังเฉลยวิชารังสีเทคนิค
+            </h1>
+            <div class="flex gap-2">
+                <button onclick="switchYear('64')" id="btn-64" class="year-btn px-4 py-2 rounded-lg font-semibold bg-white text-blue-700 shadow-md">ปี 2564</button>
+                <button onclick="switchYear('65')" id="btn-65" class="year-btn px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500">ปี 2565</button>
+                <button onclick="switchYear('66')" id="btn-66" class="year-btn px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-500">ปี 2566</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded shadow-sm text-sm">
+            <p class="font-bold text-amber-800 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i> คำแนะนำสำหรับนักพัฒนา (GitHub Deployment)
+            </p>
+            <p class="text-amber-700 mt-1">
+                โปรดอย่าลืมนำไฟล์นี้ไปใส่ <b>Firebase Config API Key</b> ของคุณเองในส่วนท้ายของไฟล์โค้ด (บรรทัดที่ 1070 เป็นต้นไป) เพื่อเชื่อมต่อฐานข้อมูลและเปิดใช้ปุ่มแก้ไขเฉลยให้สมบูรณ์ครับ! หัวข้อข้อสอบจะถูกดึงข้อมูลเริ่มต้นจากตัวแปรในแอป และจะอัปเดตแบบเรียลไทม์ทันทีเมื่อมีคนกดแก้ไขระบบหลังบ้าน
+            </p>
+        </div>
+
+        <div class="mb-6 flex justify-between items-center">
+            <h2 id="current-year-title" class="text-2xl font-bold text-gray-700 border-b-4 border-blue-500 pb-2">ชุดข้อสอบประจำปี 2564</h2>
+            <span class="text-sm bg-gray-200 px-3 py-1 rounded-full font-medium" id="question-count">55 ข้อ</span>
+        </div>
+
+        <div id="quiz-container" class="space-y-6"></div>
+    </main>
+
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-fade-in">
+            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-pen-to-square text-blue-600"></i> แก้ไขเฉลยข้อสอบ
+            </h3>
+            <p id="modal-q-text" class="text-gray-600 text-sm mb-4 line-clamp-3 bg-gray-50 p-3 rounded border border-gray-200"></p>
+            
+            <form id="edit-form" onsubmit="saveEdit(event)">
+                <input type="hidden" id="modal-year">
+                <input type="hidden" id="modal-q-id">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">เลือกข้อเฉลยที่ถูกต้องใหม่:</label>
+                    <div class="space-y-2" id="modal-options-container">
+                        </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="modal-user" class="block text-sm font-semibold text-gray-700 mb-1">ชื่อผู้แก้ไข (Required):</label>
+                    <input type="text" id="modal-user" required placeholder="ใส่นามแฝงหรือชื่อของคุณ" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 hover:bg-gray-100">ยกเลิก</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // 1. คลังข้อมูลข้อสอบชุดเริ่มต้น (ปี 2564, 2565, 2566) พร้อมข้อมูลเฉลย
+        const rawExamData = {
+            "64": [
+                { id: 1, q: "ข้อต่อชนิดใดต่อไปนี้ที่พบว่ามีของเหลวอยู่ในบริเวณข้อต่อ", a: [ "Fibrous joint", "Synovial joint", "Socket joint", "Cartilaginous joint", "Gliding joint" ], ans: 2 },
+                { id: 2, q: "ข้อใดกล่าวถูกต้องเกี่ยวกับ T1 Weighted Image ในการตรวจ MRI", a: [ "เวลาที่ longitudinal magnetization คืนกลับ 36% ของจำนวนเริ่มต้น", "เห็นอากาศในอวัยวะเป็นสีขาว", "ตั้งค่าพารามิเตอร์ TR และ TE ยาว", "เวลาที่ transverse magnetization คืนกลับ 36% ของจำนวนเริ่มต้น", "เห็น CSF (Cerebrospinal fluid) เป็นสีดำ" ], ans: 5 },
+                { id: 3, q: "ส่วนประกอบใดของหลอดเอกซเรย์ที่ก่อให้เกิดปรากฏการณ์ Heel effect", a: [ "Aluminum filter", "Cathode", "Anode", "Beryllium window", "Focusing cup" ], ans: 3 },
+                { id: 4, q: "อวัยวะในข้อใดที่ทะลุผ่านจาก diaphragm สู่ช่องท้องในระดับทางกายวิภาคที่ต่ำที่สุด", a: [ "Aorta", "Esophagus", "Renal artery", "Trachea", "Inferior vena cava" ], ans: 1 },
+                { id: 5, q: "ข้อใดอยู่นอกเส้นทางเดินน้ำดีที่สร้างจากตับไปยังลำไส้เล็กส่วนต้น", a: [ "Cystic duct", "Right hepatic duct", "Common hepatic duct", "Pancreatic duct", "Common bile duct" ], ans: 4 },
+                { id: 6, q: "ระยะ Source-to-Image Receptor Distance (SID) ที่เหมาะสมสำหรับการถ่ายภาพรังสีของกระดูกสันหลังส่วนคอในท่า Lateral คือข้อใด", a: [ "30 นิ้ว", "72 นิ้ว", "40 นิ้ว", "120 นิ้ว", "100 นิ้ว" ], ans: 2 },
+                { id: 7, q: "ในภาพ Ultrasound ส่วนที่อยู่ใต้ต่อถุงน้ำในตับ (Liver cyst) จะมีลักษณะการเกิดเนื้อภาพส่วนเกิน (Artifact) แบบใด", a: [ "Posterior enhancement", "Mirror artifact", "Reverberation artifact", "Twinkle artifact", "Posterior shadowing" ], ans: 1 },
+                { id: 8, q: "การหาค่า Modulation Transfer Function (MTF) ใช้ในการประเมินคุณภาพของภาพเอกซเรย์คอมพิวเตอร์ (CT) ในหัวข้อใด", a: [ "CT number uniformity", "Image noise", "Spatial resolution", "CT number linearity", "Low contrast resolution" ], ans: 3 },
+                { id: 9, q: "โครงสร้าง \"Scottie dog\" สามารถมองเห็นได้จากการถ่ายภาพเอกซเรย์กระดูกสันหลังส่วนเอว (Lumbar spine) ในท่าใด", a: [ "PA Axial", "AP Axial Oblique", "Lateral", "AP Oblique", "AP Axial" ], ans: 4 },
+                { id: 10, q: "หลอดเลือดที่ไปเลี้ยงหัวใจ (Coronary arteries) แยกออกเป็นแขนงมาจากหลอดเลือดใหญ่ใด", a: [ "Thoracic aorta", "Ascending aorta", "Subclavian artery", "Arch of aorta", "Left common carotid artery" ], ans: 2 },
+                { id: 11, q: "ข้อใดกล่าวถูกต้องที่สุดเกี่ยวกับเทคนิคการตรวจ CT Brain Perfusion", a: [ "ขณะทำการสแกนผู้ป่วยต้องอยู่ในท่านอนคว่ำ", "เป็นการสแกนสมองในตำแหน่งเดิมซ้ำๆ ภายในเวลาที่กำหนดเพื่อดูการไหลเวียนเลือด", "ใช้ค่า High kVp ในการสแกน", "ไม่จำเป็นต้องมีการฉีดสารทึบรังสี", "เป็นการตรวจผู้ป่วยในกรณีสงสัย Brain metastasis เป็นหลัก" ], ans: 2 },
+                { id: 12, q: "ค่าพารามิเตอร์ใดเป็นตัวกำหนดจำนวนเฉดสีเทา (Grey-scale) ของภาพดิจิทัล", a: [ "Dynamic range และ Histogram", "LUT และ Histogram", "Bit depth และ Dynamic range", "Bit depth และ LUT", "Histogram และ Bit depth" ], ans: 3 },
+                { id: 13, q: "Slip ring ที่นำมาใช้ในเครื่องเอกซเรย์คอมพิวเตอร์แบบ Spiral CT ทำหน้าที่หลักตามข้อใด", a: [ "เป็นขั้วไฟฟ้า", "เป็นอุปกรณ์ดูดกลืนรังสีกระเจิง", "เป็นอุปกรณ์ป้องกันรังสีรั่ว", "เป็นช่องทางออกของลำรังสี", "เป็นอุปกรณ์ต่อเชื่อมกระแสไฟเพื่อให้หมุนสแกนได้อย่างต่อเนื่อง" ], ans: 5 },
+                { id: 14, q: "ข้อใดเป็นท่าถ่ายภาพรังสีที่เป็นท่าทั่วไป (Routine views) ในการตรวจเต้านม (Mammography)", a: [ "Caudocranial และ Mediolateral oblique", "Craniocaudal และ Mediolateral", "Caudocranial และ Mediolateral", "Craniocaudal และ Mediolateral oblique", "Craniocaudal และ Lateromedial" ], ans: 4 },
+                { id: 15, q: "เหตุใดจึงต้องมีการจัดท่าให้ผู้ป่วยโน้มหัวไหล่ไปด้านหน้าขณะถ่ายภาพเอกซเรย์ทรวงอก (Chest X-ray) ในท่า PA", a: [ "เพื่อให้ Diaphragm เคลื่อนตัวลงต่ำ", "เพื่อดึงกระดูกสะบัก (Scapula) ออกไม่ให้มาบดบังบริเวณลานปอด", "เพื่อแยก Clavicle ออกจากยอดปอด", "เพื่อให้ Ribs อยู่ในแนว Horizontal มากขึ้น", "เพื่อทำให้ Lungs มีการขยายตัวได้เต็มที่" ], ans: 2 },
+                { id: 16, q: "พยาธิสภาพของทรวงอกในข้อใดที่มีลักษณะความทึบต่อรังสี (Radiopacity) แตกต่างจากข้ออื่นอย่างชัดเจน", a: [ "Pleural effusion", "Lung mass", "Pneumonia", "Pneumothorax", "Pneumonitis from Covid-19" ], ans: 4 },
+                { id: 17, q: "การถ่ายภาพรังสีกระดูกสันหลังส่วนคอ (Cervical spine) ในท่า Both Oblique มีวัตถุประสงค์หลักเพื่อดูโครงสร้างใด", a: [ "Cervical foramen", "Vertebral foramen", "Intercervical foramen", "Transverse foramen", "Intervertebral foramen" ], ans: 5 },
+                { id: 18, q: "ข้อใดต่อไปนี้ ไม่ได้จัด อยู่ในกลุ่มหลอดเลือดของ Circle of Willis", a: [ "Anterior cerebral artery", "Internal carotid artery", "Posterior communicating artery", "Posterior cerebral artery", "Basilar artery" ], ans: 5 },
+                { id: 19, q: "เครื่องเอกซเรย์หลอดเลือดดิจิทัล (DSA) ในปัจจุบัน นิยมใช้ตัวรับภาพแบบ Flat Panel Detector ชนิดใด", a: [ "CaWO4", "Xenon gas", "a-Si with CsI (Amorphous Silicon with Cesium Iodide)", "Gallium oxide", "Image intensifier" ], ans: 3 },
+                { id: 20, q: "Pulse sequence พื้นฐานใดของ MRI ที่ใช้สร้างภาพแบบ T2-weighted images", a: [ "Balance steady state", "Spin Echo", "Gradient Echo", "Inversion Recovery", "Coherence steady state" ], ans: 2 },
+                { id: 21, q: "การทดสอบเพื่อควบคุมคุณภาพประจำวัน (Daily QC) ของเครื่องมือทางรังสีวิทยา ข้อใดปฏิบัติได้ถูกต้องและเหมาะสมที่สุด", a: [ "การทดสอบค่า CT number accuracy ด้วย Water phantom", "การประเมินความสามารถในการแสดงภาพใน Dead zone ของ Ultrasound", "การทำ Primary erasure ในระบบ CR", "การประเมินคุณภาพของภาพ Mammogram ด้วย ACR phantom", "การประเมิน Contrast sensitivity ของเครื่อง Fluoroscopy" ], ans: 1 },
+                { id: 22, q: "ระนาบหรือแกนในข้อใดที่ใช้แบ่งร่างกายออกเป็นด้านซ้ายและด้านขวาเท่าๆ กัน", a: [ "Mid-coronal plane", "Mid-transverse plane", "Mid-axillary plane", "Mid-horizontal plane", "Mid-sagittal plane" ], ans: 5 },
+                { id: 23, q: "การตั้งค่าพารามิเตอร์ของเครื่อง CT Scan ในข้อใดที่จะให้ค่า Signal-to-Noise Ratio (SNR) ของภาพสูงที่สุด", a: [ "Low kVp, high mA, small pitch", "Low kVp, low mA, small pitch", "High kVp, high mA, large pitch", "High kVp, low mA, large pitch", "High kVp, high mA, small pitch" ], ans: 5 },
+                { id: 24, q: "หากต้องการเปิดเผยช่องข้อต่อ Talofibular joint space ให้เห็นได้ชัดเจนที่สุด ควรถ่ายภาพเอกซเรย์ข้อเท้า (Ankle) ท่าใด", a: [ "PA view", "Lateral view", "AP view", "AP Weight bearing view", "Mortise view" ], ans: 5 },
+                { id: 25, q: "ส่วนประกอบใดภายในหลอดเอกซเรย์ที่ทำหน้าที่โฟกัสและควบคุมทิศทางของลำอิเล็กตรอนให้พุ่งไปยังเป้า", a: [ "Focal spot", "Cathode", "Anode", "Filament", "Focusing cup" ], ans: 5 },
+                { id: 26, q: "ข้อใดเลือกใช้เทคนิคและอุปกรณ์ได้ถูกต้องและเหมาะสมที่สุดสำหรับการถ่ายภาพรังสีผู้ป่วยเด็กด้วยเครื่องฟลูโอโรสโคปี (เพื่อลดปริมาณรังสีสะสม)", a: [ "ตั้งค่า Pulse rate สูงเพื่อให้ภาพมีความต่อเนื่อง", "ใช้ FOV ขนาดเล็กเพื่อให้เห็นอวัยวะได้ชัดเจน", "ตั้งค่า Frame rate สูงเพื่อให้ได้ Temporal resolution ที่ดี", "ไม่ใช้แผ่นกรองรังสีกระเจิง (Non-anti scatter grid)", "เลือกใช้ Added copper filter เพื่อเพิ่มคุณภาพและกรองรังสีพลังงานต่ำ" ], ans: 4 },
+                { id: 27, q: "ตามหลักการสร้างภาพลบภาพหลอดเลือด ดิจิทัล (Digital Subtraction Angiography: DSA) จะต้องใช้ภาพในการประมวลผลอย่างน้อยที่สุดกี่ภาพ", a: [ "2 ภาพ (ภาพก่อนฉีดสารทึบรังสี/Mask และภาพหลังฉีดสารทึบรังสี)", "3 ภาพ", "4 ภาพ", "1 ภาพ", "5 ภาพ" ], ans: 1 },
+                { id: 28, q: "ข้อใด ไม่ใช่ เกณฑ์หรือลักษณะในการพิจารณาภาพถ่ายเอกซเรย์ปอด ท่า PA ที่ดีและได้มาตรฐาน", a: [ "ส่วนของ Scapula ควรจะเคลื่อนตัวแยกออกพ้นจากลานปอด (Lung fields)", "กึ่งกลางลำรังสีหลัก (Central ray) ควรอยู่ที่ระดับกระดูกสันหลังอกข้อ T7", "เห็นกระดูกซี่โครงด้านหลัง (Posterior ribs) เพียง 7 คู่", "เห็นภาพครอบคลุมส่วนยอดปอด (Apex), มุมกระดูกซี่โครง (Costophrenic angles) และขอบด้านข้าง", "ควรจะเห็นส่วนเนื้อปอดประมาณ 2 นิ้ว อยู่เหนือระดับกระดูกไหปลาร้า (Clavicles)" ], ans: 3 },
+                { id: 29, q: "ชุดวงจรเรียงกระแสไฟฟ้าแรงดันสูง (High voltage rectifier) ในเครื่องเอกซเรย์ทำหน้าที่ใด", a: [ "แปลงกระแสไฟฟ้าจาก DC เป็น AC", "แปลงไฟฟ้าให้มีแรงดัน (Voltage) สูงขึ้น", "ตัดสัญญาณรบกวนในระบบกระแสไฟฟ้า", "แปลงความถี่ของคลื่นไฟฟ้าให้สูงขึ้น", "แปลงกระแสไฟฟ้าสลับ (AC) ให้กลายเป็นกระแสไฟฟ้าตรง (DC)" ], ans: 5 },
+                { id: 30, q: "ต่อมอะดีนอยด์ (Adenoid gland / Pharyngeal tonsil) ตั้งอยู่ในพื้นที่ส่วนใดของคอหอย", a: [ "Nasopharynx", "Superior nasal concha", "Laryngopharynx", "Nasal cavity", "Oropharynx" ], ans: 1 },
+                { id: 31, q: "หากต้องการถ่ายภาพเอกซเรย์ข้อมือเพื่อแสดงกระดูก Scaphoid ให้แยกตัวออกมาเห็นได้ชัดเจนที่สุด ควรถ่ายภาพในท่าใด", a: [ "Oblique view", "Lateral view", "PA projection with Ulnar deviation", "AP view", "PA view" ], ans: 3 },
+                { id: 32, q: "การถ่ายภาพเอกซเรย์กระดูกสะโพกในท่า Judet view มีการจัดท่าแบบใด และมีวัตถุประสงค์เพื่อประเมินโครงสร้างใด", a: [ "RPO, LPO เพื่อดู Acetabulum", "RAO, LAO เพื่อดู Acetabulum", "RPO, LAO เพื่อดู Hip joint", "RPO, LPO เพื่อดู Hip joint", "AP, Lateral เพื่อดู Pelvis" ], ans: 1 },
+                { id: 33, q: "ข้อใดอธิบายเหตุผลหลักของการเลือกใช้แรงดันไฟฟ้าต่ำ (Low kVp) ในการถ่ายภาพเอกซเรย์เต้านม", a: [ "เพื่อความปลอดภัยสูงสุดต่อเนื้อเยื่อของผู้ป่วย", "เพื่อต้องการให้เกิด Compton effect มากกว่า Photoelectric effect", "เพื่อจะสามารถใช้ค่า mA ที่สูงขึ้นเพื่อเพิ่มสัญญานภาพ", "เพื่อเพิ่มเวลาในการถ่ายภาพในการเพิ่มความดำของภาพ", "เพื่อเพิ่มอันตรกิริยาแบบ Photoelectric effect ให้สูงกว่า Compton effect เพื่อเพิ่ม Contrast ของเนื้อเยื่ออ่อน" ], ans: 5 },
+                { id: 34, q: "ข้อต่อคู่ใดของร่างกายที่มีรูปแบบการเคลื่อนไหวลักษณะเป็นแบบเบ้าและบอล (Ball and Socket Joint)", a: [ "Ankle joint", "Wrist joint", "Shoulder joint", "Knee joint", "Hand joint" ], ans: 3 },
+                { id: 35, q: "ข้อใดกล่าวถึงการจัดวางตำแหน่งหลอดเพื่อใช้ประโยชน์จากคุณลักษณะ Heel effect ได้อย่างถูกต้องตามหลักการ", a: [ "หันขั้วแคโทด (Cathode) ไปทางด้าน Femoral head ในการถ่ายภาพเอกซเรย์กระดูกต้นขา (Femur)", "หันขั้วแคโทด (Cathode) ไปทางด้าน Nipple ในการตรวจเอกซเรย์เต้านม", "หันขั้วแคโทด (Cathode) ไปทางด้าน T-spine ในการถ่ายภาพเอกซเรย์รวมของ T-L spine", "หันขั้วแอโนด (Anode) ไปทางด้าน Calcaneus ในการถ่ายภาพท่า Axial calcaneus", "หันขั้วแอโนด (Anode) ไปทางด้าน T-spine ในการถ่ายภาพเอกซเรย์รวมของ C-T spine" ], ans: 1 },
+                { id: 36, q: "ข้อใดคือวัตถุประสงค์หลักของการใช้เทคนิคสารทึบรังสีคู่ (Double Contrast Technique) ในการตรวจระบบทางเดินอาหาร", a: [ "เพื่อตรวจหาวินิจฉัยก้อนมะเร็งขนาดใหญ่", "เพื่อดูสภาพการทำงานการบีบตัวของทางเดินอาหาร", "เพื่อดูขนาดเชิงพื้นที่และรูปร่างโดยรวมของทางเดินอาหาร", "เพื่อประเมินการเคลื่อนที่ของก้อนอาหาร", "เพื่อเปิดเผยให้เห็นรายละเอียดและการเปลี่ยนแปลงของเยื่อบุผนังทางเดินอาหาร (Mucosal pattern)" ], ans: 5 },
+                { id: 37, q: "ในการตรวจด้วยเครื่อง Spiral CT หากเลือกขนาด Collimator เป็น 16x1 mm และตั้งค่าความเร็วเตียงเลื่อนเป็น 15 mm ต่อการหมุน 1 รอบ ลักษณะของแผ่นภาพ (Slices) ที่ได้จะเป็นอย่างไร", a: [ "เกิดช่องว่าง (Gap) ระหว่างแผ่นภาพ", "ขึ้นอยู่กับจำนวนมุมมอง (Number of projection) ที่กวาดสัญญาณได้", "ขึ้นอยู่กับตำแหน่งการบีบลำรังสีของ Pre-patient collimator", "เกิดการซ้อนทับกันของข้อมูลภาพ (Overlapping slices)", "แผ่นภาพทั้ง 2 แผ่นเรียงต่อสลับกันพอดี" ], ans: 4 },
+                { id: 38, q: "ทางด้านล่าง (Inferior) ของกระดูกข้อเท้า Talus จะวางตัวต่อเชื่อมอยู่กับกระดูกชิ้นใด", a: [ "2nd Cuneiform", "Subtalar joint", "Navicular", "Calcaneus", "Cuboid" ], ans: 4 },
+                { id: 39, q: "อุปกรณ์ชิ้นส่วนใดในเครื่อง MRI ที่ทำหน้าที่ทั้งส่งคลื่นวิทยุไปกระตุ้นและรับสัญญาณสะท้อนกลับเพื่อส่งไปประมวลผลเป็นภาพ", a: [ "Gradient coil", "Torso coil", "Passive shimming coil", "Main magnetic field", "Body coil" ], ans: 5 },
+                { id: 40, q: "คุณลักษณะช่วงตอบสนองสัญญาณ (Dynamic range) ของตัวรับภาพแผ่น Imaging Plate ในระบบ CR จะมีความคล้ายคลึงกับส่วนใดของ X-ray film characteristic curve มากที่สุด", a: [ "Threshold", "Latitude", "Gamma", "Solarization", "Shoulder" ], ans: 2 },
+                { id: 41, q: "ข้อใดคือกลุ่มเทคนิคการทำหัตถการทางรังสีวิทยาอินเทอร์เวนชันประเภทที่ไม่เกี่ยวกับหลอดเลือด (Non-vascular Interventional Radiology) ทั้งหมด", a: [ "PTBD, PCD, TIPS", "PTBD, PCD, Biopsy", "TIPS, PCD, Biopsy", "PCD, Biopsy, TACE", "PTBD, TACE, Biopsy" ], ans: 2 },
+                { id: 42, q: "ข้อใดคือเครื่องมือมาตรฐานหลัก (Gold Standard) ที่ใช้สำหรับการตรวจคัดกรองเพื่อค้นหามะเร็งเต้านมในระยะเริ่มต้น", a: [ "Cone beam computed tomography", "Mammography", "Fluorography", "Sonography", "Magnetic Resonance Imaging" ], ans: 2 },
+                { id: 43, q: "เครื่องเอกซเรย์เคลื่อนที่ (Portable X-ray machine) จะต้องมีสายควบคุมปุ่มกดถ่ายภาพรังสี (Hand switch) ยาวเหยียดออกไปไม่น้อยกว่าเท่าใดตามมาตรฐานความปลอดภัย", a: [ "2.5 เมตร", "1.1 เมตร", "1.5 เมตร", "3 เมตร", "2 เมตร" ], ans: 5 },
+                { id: 44, q: "การปรับเพิ่มค่าพารามิเตอร์การสร้างภาพข้อใดในเครื่อง MRI ที่จะช่วยส่งผลให้เวลาในการสแกนทั้งหมด (Total scan time) ลดลง", a: [ "Turbo factor / Echo Train Length (ETL)", "Frequency encoding", "Phase encoding", "Number of Signal Average (NSA / NEX)", "Number of shots" ], ans: 1 },
+                { id: 45, q: "ในการตรวจคลื่นความถี่สูง (Ultrasound) ของต่อมไทรอยด์ (Thyroid) ควรเลือกใช้หัวตรวจ (Transducer) ประเภทและช่วงความถี่ใดจึงจะเหมาะสมที่สุด", a: [ "หัวตรวจแบบ Convex ความถี่ 3-5 MHz", "หัวตรวจแบบ Convex ความถี่ 9-12 MHz", "หัวตรวจแบบ Linear ความถี่ 3-5 MHz", "หัวตรวจแบบ Linear ความถี่ 9-12 MHz", "หัวตรวจแบบ Sector ความถี่ 2-5 MHz" ], ans: 4 },
+                { id: 46, q: "ข้อใดคือรายงานแนวทางและมาตรฐานสากล (Report task group) ที่กำหนดขึ้นเพื่อใช้สำหรับตรวจสอบควบคุมคุณภาพชุดจอแสดงผลภาพเพื่อการวินิจฉัย", a: [ "TG-18", "TG-32", "TG-10", "TG-22", "TG-39" ], ans: 1 },
+                { id: 47, q: "ในกระบวนการตรวจภาพรังสีเต้านม หากต้องการให้เกิดการขยายขนาดภาพรังสีเฉพาะจุด (Magnification technique) ควรตั้งค่าระยะอย่างไร", a: [ "ลดระยะ SID และเพิ่มระยะ OID", "เพิ่มระยะ SID", "ลดระยะ SID", "เพิ่มระยะ OID", "ลดระยะ OID" ], ans: 4 },
+                { id: 48, q: "ปัจจัยหรือพารามิเตอร์ในข้อใดต่อไปนี้ที่ส่งผลต่อปริมาณการเกิดรังสีกระเจิง (Scatter radiation) น้อยที่สุด", a: [ "OID", "Focal spot size", "kVp", "Patient size", "FOV" ], ans: 2 },
+                { id: 50, q: "เทคนิคการประมวลผลสร้างภาพ 3 มิติ (Image Processing Technique) ในข้อใดที่ได้รับความนิยมนำมาใช้น้อยที่สุด ในการตรวจวินิจฉัยหลอดเลือดด้วยเอกซเรย์คอมพิวเตอร์ (CTA)", a: [ "Volume Rendering (VR)", "Multi-planar Reformation (MPR)", "Maximum Intensity Projection (MIP)", "Minimum Intensity Projection (MinIP)", "Vessel Analysis Tools" ], ans: 4 },
+                { id: 51, q: "การถ่ายภาพรังสีไซนัสในท่า Waters view แล้วกำหนดให้ผู้ป่วยทำการอ้าปาก (Open-mouth Waters) มีวัตถุประสงค์เพื่อต้องการประเมินโครงสร้างใด", a: [ "Sphenoid sinus", "Ethmoid sinus", "Nasopharynx", "Nasal bone", "Oropharynx" ], ans: 1 },
+                { id: 52, q: "การสร้างภาพ MRI ด้วยเทคนิค DWI (Diffusion-Weighted Imaging) อาศัยหลักการตรวจวัดพฤติกรรมการเคลื่อนที่ตามธรรมชาติของโมเลกุลของสารในข้อใด", a: [ "Sodium", "Water", "Choline", "Contrast media", "Potassium" ], ans: 2 },
+                { id: 53, q: "ตามมาตรฐานการออกแบบ โดยทั่วไปเครื่องเอกซเรย์เต้านม (Mammography) ไม่ควรมีขนาดของจุดโฟกัสเล็กสุด (Small focal spot size) เกินกว่าเท่าใด", a: [ "0.6 mm", "1.0 mm", "0.2 mm", "0.3 mm", "0.5 mm" ], ans: 4 },
+                { id: 54, q: "บริเวณพื้นที่สมองส่วนกลีบใด (Brain lobe) ที่ทำหน้าที่หลักและเป็นศูนย์กลางที่เกี่ยวข้องกับการประมวลผลการมองเห็น (Visual processing)", a: [ "Occipital lobe", "Parietal lobe", "Frontal lobe", "Insula lobe", "Temporal lobe" ], ans: 1 },
+                { id: 55, q: "ข้อใดคือหน่วยทางโครงสร้างและหน้าที่ซึ่งเล็กที่สุดของเต้านม ซึ่งมักเป็นจุดเริ่มต้นหลักในการเกิดพยาธิสภาพหรือมะเร็งส่วนใหญ่", a: [ "Connective tissue stroma", "Acini", "Lobe", "Terminal Ductal Lobular Unit (TDLU)", "Fibroglandular tissue" ], ans: 4 },
+                { id: 56, q: "ปุ่มควบคุมปรับค่า Time Gain Compensation (TGC) ในชุดเครื่องเครื่องอัลตราซาวด์ (Ultrasound) มีหน้าที่และประโยชน์ไว้สำหรับการปรับแต่งสิ่งใด", a: [ "ปรับเพิ่ม - ลด Impedance ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม - ลด Interface ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม - ลด Frequency ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม - ลด Amplitude (Gain) ของสัญญาณสะท้อนตามระดับความลึกที่เพิ่มขึ้นเพื่อชดเชยพลังงานที่สูญเสียไป", "ปรับเพิ่ม - ลด Resistance ของคลื่นเสียงตามความลึก" ], ans: 4 }
+            ],
+            "65": [
+                { id: 1, q: "ข้อใด ไม่ใช่ ปัจจัยที่มีผลต่อการลดปริมาณรังสีให้แก่ผู้ป่วยในการตรวจเอกซเรย์เต้านม (Mammography)", a: [ "Compressed breast thickness", "Paddle size", "Compression force", "kVp", "Pixel size" ], ans: 5 },
+                { id: 2, q: "กระดูกข้อมือชิ้นที่ใหญ่ที่สุดคือกระดูกใด และเห็นชัดเจนจากการถ่ายเอกซเรย์ท่าใด", a: [ "Scaphoid, Radius deviation", "Capitate, Ulnar deviation", "Pisiform, Ulnar deviation", "Capitate, Radius deviation", "Scaphoid, Ulnar deviation" ], ans: 2 },
+                { id: 3, q: "อุปกรณ์ใดที่ใช้สำหรับการเลือก Slice ในการสร้างภาพของเครื่อง MRI", a: [ "Shim coil", "RF coil", "Gradient coil", "Receiver coil", "Main coil" ], ans: 3 },
+                { id: 4, q: "จากรูป CT ตำแหน่งที่ลูกศรชี้คืออะไร", a: [ "Odontoid process", "Articular process", "Spinous process", "Lamina", "Anterior tubercle of C1" ], ans: 1 },
+                { id: 5, q: "Bifurcation ของ Abdominal aorta เป็น Common iliac artery อยู่ที่ระดับกระดูกสันหลังข้อใด", a: [ "L4-L5", "T4-T5", "L1", "T12" ], ans: 1 },
+                { id: 6, q: "ท่าใดดีที่สุดสำหรับตรวจ Occipital skull fracture", a: [ "Towne view", "Caldwell view", "Waters view", "Lateral view" ], ans: 1 },
+                { id: 7, q: "การตั้งค่า Window width (WW) เท่ากับ 84 และค่า Window level (WL) เท่ากับ 16 จากเครื่อง CT ข้อใดต่อไปนี้สามารถมองเห็นรายละเอียดเนื้อเยื่อได้", a: [ "Brain (35 HU)", "Water (0 HU)", "Muscle (20 HU)", "Fat (-40 HU)", "Spleen (45 HU)" ], ans: 1 },
+                { id: 8, q: "ในหลอดเอกซเรย์ ข้อใดที่เกี่ยวข้องโดยตรงกับ Spatial resolution", a: [ "Type of filter material", "Field of radiation", "Size of collimator", "Size of focal spot", "Type of target material" ], ans: 4 },
+                { id: 9, q: "Slip ring technology ในเครื่อง CT มีประโยชน์อย่างไร", a: [ "นำไฟฟ้าเข้าสู่หลอดเอกซเรย์ได้อย่างต่อเนื่องในขณะหมุนสแกน", "ช่วยให้ผู้ป่วยได้รับปริมาณรังสีลดลง", "ช่วยควบคุมปริมาณรังสีที่ผ่านตัวผู้ป่วยและไปตกกระทบที่หัววัดรังสี", "ช่วยป้องกันกระแสไฟฟ้าลัดวงจรภายใน Gantry", "เป็นหน่วยจ่ายไฟฟ้าสำรองให้กับเครื่องเอกซเรย์คอมพิวเตอร์" ], ans: 1 },
+                { id: 10, q: "ข้อใดเป็นท่าทั่วไปที่ใช้ในการถ่ายภาพเพื่อดูโพรงอากาศรอบจมูก (Paranasal sinuses)", a: [ "Caldwell & Towne", "Waters open-mouth & Towne", "Towne & Submentovertex", "Submentovertex & Lateral", "Caldwell & Waters open-mouth" ], ans: 5 },
+                { id: 11, q: "ข้อใดเป็นการทดสอบเพื่อตรวจสอบความถูกต้องของศูนย์กลางลำรังสีและขอบเขตของลำรังสี (Light field กับ X-ray field alignment)", a: [ "Collimator and beam alignment", "mAs reciprocity", "HVL", "Tube current consistency", "Grid alignment" ], ans: 1 },
+                { id: 13, q: "วัตถุประสงค์หลักของการนำค่า Exposure Index (EI) มาใช้ในระบบ Computed Radiography (CR) คือข้อใด", a: [ "เพื่อลดปริมาณการถ่ายภาพเอกซเรย์ซ้ำ", "เพื่อลดปริมาณรังสีให้กับผู้ปฏิบัติงาน", "เพื่อป้องกันไม่ให้ผู้ป่วยได้รับปริมาณรังสีมากเกินความจำเป็น (Exposure creep)", "เพื่อเพื่อให้ได้ภาพเอกซเรย์มีคุณภาพสูงสุด", "เพื่อแสดงปริมาณรังสีที่ผู้ป่วยได้รับโดยตรง" ], ans: 3 },
+                { id: 14, q: "Dynamic range ของ imaging plate ในระบบ CR มีลักษณะคล้ายกับส่วนใดของ X-ray film characteristic curve", a: [ "Shoulder", "Polarization", "Threshold", "Gamma", "Latitude" ], ans: 5 },
+                { id: 15, q: "ส่วนประกอบของ Image Intensifier ในเครื่องฟลูออโรสโคปี ทำหน้าที่เปลี่ยน Visible light เป็น Electron คือข้อใด", a: [ "Output phosphor", "Electrostatic focusing lens", "Input phosphor", "Photocathode", "Camera tube" ], ans: 4 },
+                { id: 16, q: "การตรวจ CT Brain ควรใช้ FOV ที่เหมาะสมประมาณ 20-25 cm หากปรับใช้ FOV มากกว่า 30 cm จะส่งผลอย่างไรต่อภาพ", a: [ "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice thickness", "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice collimation", "ระยะการเคลื่อนที่ของเตียง / Slice collimation", "ระยะการเคลื่อนที่ของเตียงต่อการหมุนหลอดเอกซเรย์ 1 รอบ / Slice interval", "ระยะการเคลื่อนที่ของเตียง / Slice thickness" ], ans: 2 },
+                { id: 17, q: "การตรวจ CT Brain ควรใช้ FOV ที่เหมาะสมประมาณ 20-25 cm หากปรับใช้ FOV มากกว่า 30 cm จะส่งผลอย่างไรต่อภาพ", a: [ "ขนาดภาพ Brain เล็กลง รายละเอียดภาพแย่ลง (Spatial resolution ลดลง)", "ขนาดภาพ Brain ใหญ่ขึ้น รายละเอียดภาพดีขึ้น", "ขนาดภาพ Brain เล็กลง รายละเอียดภาพดีขึ้น", "ขนาดภาพ Brain ใหญ่ขึ้น รายละเอียดภาพแย่ลง", "ขนาดภาพ Brain เล็กลง รายละเอียดภาพเหมือนเดิม" ], ans: 1 },
+                { id: 18, q: "การถ่ายเอกซเรย์ AP Shoulder เพื่อให้เห็น Greater tubercle of humerus ชัดเจนที่สุด ควรจัดแขนของผู้ป่วยให้อยู่ในลักษณะใด", a: [ "Adduction", "Internal rotation", "Neutral rotation", "External rotation", "Abduction" ], ans: 4 },
+                { id: 19, q: "จากภาพ Ultrasound ช่องท้อง ความผิดปกติที่ลูกศรชี้คือข้อใด", a: [ "Gallbladder polyp", "Liver cyst", "Gallstone", "Calcified portal vein", "Liver calcification" ], ans: 3 },
+                { id: 20, q: "Cleaves หรือ Frog-leg position เป็นท่าที่ใช้สำหรับถ่ายภาพรังสีเพื่อดูโครงสร้างใด", a: [ "Ankle", "Humerus", "Femoral necks", "Knee", "Patella" ], ans: 3 },
+                { id: 21, q: "การตรวจ CT ช่องท้องเพื่อพยาธิสภาพใด ควรมีการทำ Delay phase scan ร่วมด้วย", a: [ "Hemangioma", "Liver metastases", "Cirrhosis", "Fatty liver", "Cholecystitis" ], ans: 1 },
+                { id: 22, q: "การตรวจทางเอกซเรย์คอมพิวเตอร์ (CT) ในข้อใด จำเป็นต้องให้สารทึบรังสี (Contrast media) ร่วมด้วย", a: [ "High Resolution CT เพื่อประเมิน Emphysema", "CT Abdomen เพื่อประเมิน Bowel obstruction", "CT Pelvis เพื่อประเมิน Fractures", "CT Spine เพื่อประเมิน Bone graft placement", "CT Abdomen เพื่อประเมิน Liver abscess" ], ans: 5 },
+                { id: 23, q: "วิธีการวินิจฉัยด้วยภาพทางรังสีวิทยาใด สามารถเห็นรอยโรคหรือความผิดปกติของเนื้อปอด (Lung parenchyma) ได้ละเอียดและชัดเจนที่สุด", a: [ "Radiography", "Magnetic Resonance Imaging", "Angiography", "Ultrasonography", "Computed Tomography" ], ans: 5 },
+                { id: 24, q: "ข้อใดเป็นท่าถ่ายภาพรังสีที่เป็นท่าทั่วไป (Routine views) ในการตรวจเต้านม (Mammography)", a: [ "Craniocaudal และ Mediolateral oblique", "Caudocranial และ Mediolateral", "Craniocaudal และ Mediolateral", "Caudocranial และ Mediolateral oblique", "Craniocaudal และ Lateromedial" ], ans: 1 },
+                { id: 25, q: "การเตรียมตัวในข้อใด ไม่จำเป็น สำหรับการตรวจเอกซเรย์คอมพิวเตอร์ช่องท้องทั้งหมด (CT Whole abdomen)", a: [ "ตรวจเลือดดูค่า GFR", "งดน้ำและอาหารก่อนการตรวจอย่างน้อย 6 ชั่วโมง", "ตรวจเลือดดูค่า BUN, Creatinine", "ตรวจปัสสาวะ (Urine analysis)", "รับประทานยาระบายก่อนการตรวจ" ], ans: 4 },
+                { id: 26, q: "ข้อต่อที่อยู่บริเวณด้าน Lateral ของกระดูกไหปลาร้า (Clavicle) คือข้อใด", a: [ "Acromioclavicular joint", "Sternoclavicular joint", "Glenohumeral joint", "Scapulohumeral joint", "Manubriosternal joint" ], ans: 1 },
+                { id: 27, q: "ข้อใดคือท่าถ่ายภาพเอกซเรย์ที่เป็น Routine ของข้อเท้า (Ankle)", a: [ "AP and Oblique view", "AP mortise (15°) and Lateral view", "AP stress and Oblique view", "AP and Lateral view", "AP and AP mortise (15°) view" ], ans: 4 },
+                { id: 28, q: "ข้อใดต่อไปนี้กล่าวถึงค่า Deviation Index (DI) ในระบบถ่ายภาพรังสีดิจิทัลได้ถูกต้อง", a: [ "เป็นตัวเลขบอกปริมาณรังสีที่หลอดเอกซเรย์ผลิตออกมาโดยตรง", "เป็นตัวกำหนดปริมาณของ image noise ในภาพโดยตรง", "หาก DI มีค่ามาก แสดงว่า ปริมาณรังสีที่ผู้ป่วยได้รับยิ่งมีความเหมาะสมมากขึ้น", "เป็นค่าที่สื่อถึงความเบี่ยงเบนของปริมาณรังสีที่ตกกระทบตัวรับภาพ (Image receptor) จากค่าอ้างอิงที่เหมาะสม", "ค่า DI จะถูกกำหนดตายตัวโดยบริษัทผู้ผลิต ทำให้ไม่สามารถนำมาใช้ปรับปรุงคุณภาพภาพได้" ], ans: 4 },
+                { id: 29, q: "การเคลื่อนไหวของร่างกายในข้อใดต่อไปนี้อธิบายได้ถูกต้อง", a: [ "Dorsiflexion คือการเหยียดเท้าออกจากกระดูกขา (กดปลายเท้าลง)", "Supination คือการบิดข้อมือไปด้านกระดูก radius", "Pronation คือการหมุนกระดูกปลายแขนเพื่อคว่ำฝ่ามือลง", "Eversion คือการบิดข้อเท้าเพื่อหมุนฝ่าเท้าเข้าหาแกนกลางของร่างกาย", "Plantarflexion คือการกระดกปลายเท้าขึ้นหาหน้าแข้ง" ], ans: 3 },
+                { id: 30, q: "ปุ่มปรับ Time Gain Compensation (TGC) ในเครื่อง Ultrasound ใช้สำหรับการปรับสิ่งใด", a: [ "ปรับเพิ่ม-ลด Impedance ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม-ลด Frequency ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม-ลด Amplitude (Gain) ของสัญญาณสะท้อนกลับตามความลึก เพื่อชดเชยการลดทอนพลังงาน", "ปรับเพิ่ม-ลด Resistance ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม-ลด Interface ของคลื่นเสียงตามความลึก" ], ans: 3 },
+                { id: 31, q: "ส่วนของกระดูกสันหลังที่ยื่นออกมาทางด้านหลังสุด ซึ่งเป็นที่เกาะของกล้ามเนื้อและเอ็นต่างๆ คือข้อใด", a: [ "Lamina", "Pedicle", "Vertebral arch", "Transverse process", "Spinous process" ], ans: 5 },
+                { id: 32, q: "ข้อต่อระหว่างกระดูก Calcaneus และกระดูก Talus คือข้อใด", a: [ "SI joint", "Tibiofibular joint", "Mortise joint", "Patellofemoral joint", "Subtalar joint" ], ans: 5 },
+                { id: 33, q: "ท่าถ่ายภาพรังสีใดที่ใช้สำหรับดูช่องเปิดเส้นประสาทของกระดูกสันหลังส่วนคอ (Cervical intervertebral foramina) ได้ดีที่สุด", a: [ "Lateral with extension", "Lateral with flexion", "Lateral view", "AP or PA oblique axial view", "AP open mouth view" ], ans: 4 },
+                { id: 34, q: "หากพบว่าสัญญาณต่อสัญญาณรบกวน (Signal to Noise Ratio: SNR) ของภาพ MRI ต่ำเกินไป ควรแก้ไขอย่างไร", a: [ "ลดขนาด FOV", "เพิ่มค่า NEX (Number of Excitations) หรือ Average", "เพิ่มค่า Receive frequency bandwidth", "เพิ่ม Matrix size", "เพิ่มค่า TE" ], ans: 2 },
+                { id: 35, q: "การตรวจทางรังสีวิทยาของลำไส้เล็ก (G.I. small bowel follow-through) จะเสร็จสิ้นสมบูรณ์ต่อเมื่อสารทึบรังสีแบเรียมไหลเข้าสู่ส่วนใด", a: [ "Fundus", "Hepatic flexure", "Ascending colon", "Caecum (บริเวณ Ileocecal valve)", "Splenic flexure" ], ans: 4 },
+                { id: 36, q: "ปัจจัยใดต่อไปนี้เป็นตัวกำหนด Contrast ของภาพหลักในเทคนิค Spin Echo pulse sequence ของ MRI", a: [ "Gradient maximum", "Gradient waveform", "RF pulse width", "TE และ TR", "RF pulse waveform" ], ans: 4 },
+                { id: 37, q: "ข้อใดกล่าวถึงขอบเขตการสแกน (Scan coverage) ของการตรวจเอกซเรย์คอมพิวเตอร์โพรงอากาศรอบจมูก (CT Paranasal sinuses: CT PNS) ในท่า นอนหงาย (Supine) เอาศีรษะเข้าเครื่อง ได้ถูกต้อง", a: [ "Base of skull - Above mastoid air cells", "Base of maxillary sinuses - Above frontal air sinuses", "C1 - Vertex", "Apex of lung - Vertex", "Frontal air sinuses - End of sphenoid sinus" ], ans: 2 },
+                { id: 38, q: "เครื่องกำเนิดไฟฟ้าเอกซเรย์ (X-ray generator) ชนิดใด สามารถตั้งค่า Exposure time ได้สั้นที่สุด", a: [ "High frequency generator", "6 pulses generator", "Full wave generator", "Half wave generator", "12 pulses generator" ], ans: 1 },
+                { id: 39, q: "อุปกรณ์ในข้อใดทำหน้าที่แปลงสัญญาณรังสีเอกซ์ให้กลายเป็นสัญญาณไฟฟ้าในระบบ DR (Digital Radiography) แบบ Indirect flat panel detector", a: [ "Scintillator และ Photodiode", "Silicon diode และ Transistor", "Photodiode และ Silicon diode", "Scintillator และ Silicon diode", "Transistor และ Scintillator" ], ans: 1 },
+                { id: 40, q: "การถ่ายภาพรังสีทรวงอก (Chest X-ray) ในท่าตรง ข้อใด ไม่ใช่ เหตุผลที่เกี่ยวข้องกับการลดการขยายใหญ่ของขนาดหัวใจ (Heart magnification)", a: [ "หายใจเข้าเต็มที่ แล้วกลั้นใจนิ่ง", "ใช้ท่ายืน (Upright)", "ท้าวสะเอวและโน้มหัวไหล่ไปข้างหน้า เพื่อดึงกระดูกสะบักหลุดพ้นจากลานปอด", "ใช้ระยะโฟกัสถึงตัวรับภาพ (SID) ประมาณ 100 เซนติเมตร", "ถ่ายภาพในท่าหลังไปหน้า (PA view)" ], ans: 4 },
+                { id: 41, q: "ข้อใดเป็นข้อจำกัดสำคัญของการใช้เทคนิค Time of Flight (TOF) ในการสร้างภาพหลอดเลือดด้วยเครื่อง MRI (MRA)", a: [ "ค่า TE", "ทิศทางการไหลของเลือด (Direction of flow)", "ความเร็วการไหลของเลือด (Flow velocity)", "Slice thickness", "ค่า NEX" ], ans: 3 },
+                { id: 42, q: "การถ่ายภาพรังสีท่า Anteroposterior (AP) ของกระดูกก้นกบ (Coccyx) ลำรังสีหลักควรเอียงอย่างไร", a: [ "15° cephalad", "15° caudad", "15° medially", "45° caudad", "10° caudad" ], ans: 2 },
+                { id: 43, q: "ในภาพ MRI อัตราส่วนสัญญาณต่อสัญญาณรบกวน (Signal to Noise Ratio: SNR) ส่งผลโดยตรงต่อคุณภาพภาพในข้อใด", a: [ "Spin-lattice relaxation", "Low contrast resolution", "Spin-spin relaxation", "High contrast resolution", "Sharpness" ], ans: 2 },
+                { id: 44, q: "ประโยชน์หลักของการเลือกใช้ โฟกัสขนาดเล็ก (Small focal spot) ที่เหนือกว่าการเลือกใช้ขนาดใหญ่ (Large focal spot) คือข้อใด", a: [ "ลดการเกิดเงาสลัวรอบขอบภาพ (Penumbra) ทำให้ภาพคมชัดขึ้น", "ป้องกันการเกิด Gassy tube ได้ดีกว่า", "ทำให้เกิดความร้อนที่ไส้หลอดน้อยกว่า", "สามารถระบายความร้อนของหลอดเอกซเรย์ได้ดีกว่า", "สามารถตั้งค่ากระแสไฟฟ้า (mA) ได้สูงกว่า" ], ans: 1 },
+                { id: 45, q: "สัญญาณรบกวน (Noise) ของภาพเอกซเรย์ในระบบ Digital Radiography สามารถประเมินในเชิงสถิติได้จากค่าใดของ Pixel", a: [ "Mean of pixel values", "Standard deviation of pixel values", "Maximum of pixel values", "Median of pixel values", "Standard error of pixel values" ], ans: 2 },
+                { id: 46, q: "ข้อใดอธิบายเกี่ยวกับ Gray scale histogram ของภาพดิจิทัลได้ถูกต้อง", a: [ "รูปร่างของ Histogram จะเหมือนกันหมด ไม่ขึ้นกับ Radiographic technique ที่ใช้", "รูปร่างของ Histogram จะเหมือนกันหมด ไม่ขึ้นกับโครงสร้างทางกายวิภาค (Anatomy)", "บอกการกระจายตัวหรือจำนวนของค่า Pixel value แต่ละระดับความเข้มในภาพ", "บอกความละเอียดเชิงพื้นที่ของภาพว่ามีจำนวนพิกเซลรวมเท่าไหร่", "เป็นการแสดงความสัมพันธ์เชิงเส้นระหว่างค่า Pixel value และปริมาณรังสีที่ได้รับ" ], ans: 3 },
+                { id: 47, q: "ข้อใดต่อไปนี้คือเทคนิคการสร้างภาพหลักของ MRI ที่ใช้เพื่อลดสัญญาณจากไขมัน (Fat suppression)", a: [ "Inversion Recovery (เช่น STIR หรือ SPIR)", "Spin Echo", "Turbo Spin Echo", "Gradient Echo", "Echo Planar Imaging" ], ans: 1 },
+                { id: 48, q: "โครงสร้างช่องเปิดกะโหลกศีรษะขนาดใหญ่ (Foramen magnum) สามารถเปิดเผยและเห็นได้ดีที่สุดในท่าถ่ายภาพรังสีกะโหลกศีรษะใด", a: [ "Towne view", "AP view", "Waters view", "Caldwell view", "PA view" ], ans: 1 },
+                { id: 49, q: "จากภาพการทดสอบการควบคุมคุณภาพ (QC) ของเครื่องเอกซเรย์คอมพิวเตอร์ (CT) เป็นการประเมินในหัวข้อใด", a: [ "High contrast resolution", "Low contrast resolution", "Slice thickness", "Slice increment accuracy", "CT number linearity" ], ans: 1 },
+                { id: 50, q: "ม้าม (Spleen) จัดอยู่ในส่วนใดของช่องท้องเมื่อแบ่งพื้นที่ช่องท้องออกเป็น 9 ส่วน (Nine abdominal regions)", a: [ "Right lumbar region", "Epigastric region", "Left hypochondriac region", "Right hypochondriac region", "Left iliac region" ], ans: 3 },
+                { id: 51, q: "ข้อใดเป็นเทคนิคและวิธีการสร้างภาพเอกซเรย์คอมพิวเตอร์สมอง (CT Brain) ที่เหมาะสมที่สุดสำหรับผู้ป่วยอุบัติเหตุจักรยานยนต์ (Trauma)", a: [ "CT brain with contrast media, Soft tissue reconstruction", "CT brain with contrast media, Soft tissue and bone reconstruction", "CT brain without contrast media, Soft tissue and bone reconstruction", "CT brain without contrast media, Bone reconstruction", "CT brain without contrast media, Soft tissue reconstruction" ], ans: 3 },
+                { id: 52, q: "เมื่อมีผู้ป่วยที่ได้รับการฝังเครื่องกระตุ้นหัวใจ (Cardiac pacemaker) มานัดตรวจด้วยเครื่อง MRI นักรังสีเทคนิคควรปฏิบัติอย่างไรเป็นลำดับแรกอย่างปลอดภัยที่สุด", a: [ "อธิบายผู้ป่วยแล้วทำเรื่องปฏิเสธการตรวจและไม่รับนัด", "ปฏิเสธและไม่รับนัดในทันทีโดยไม่ชี้แจง", "รับนัดผู้ป่วยโดยให้ลงนามใบยินยอมรับความเสี่ยงอันตรายทันที", "รับตรวจผู้ป่วยตามขั้นตอนปกติเหมือนผู้ป่วยทั่วไป", "ให้ผู้ป่วยและแพทย์ร่วมตรวจสอบชนิดและรุ่นของ Pacemaker ว่าเป็นรุ่นที่รองรับ MRI (MR Conditional) หรือไม่ก่อน" ], ans: 5 },
+                { id: 53, q: "เมื่อกำหนดให้ค่าปริมาณรังสีรวมคงเดิม การปรับปัจจัยในข้อใดจะช่วยทำให้ Contrast หรือความตัดกันของภาพเอกซเรย์เพิ่มขึ้น", a: [ "Film speed", "Grid ratio (เพิ่มอัตราส่วนกริดเพื่อตัดรังสีกระเจิง)", "Focal spot size", "Field size", "Screen speed" ], ans: 2 },
+                { id: 54, q: "จากภาพโครงสร้างกระดูกเท้า ตำแหน่งหมายเลข 3 และ 4 คือกระดูกชิ้นใดตามลำดับ", a: [ "Cuboid, Talus", "Navicular, Talus", "Navicular, Calcaneus", "Cuboid, Calcaneus", "Calcaneus, Talus" ], ans: 3 },
+                { id: 55, q: "ผู้ป่วยได้รับอุบัติเหตุกะโหลกศีรษะร้าว (Skull fracture) เมื่อตรวจด้วย CT scan แบบไม่ฉีดสารทึบรังสี มักจะพบพยาธิสภาพเลือดออกเหนือเยื่อหุ้มสมองชั้นหนาที่มีลักษณะเด่นแบบข้อใด", a: [ "Epidural hemorrhage (EDH)", "Aneurysm", "Intracranial hemorrhage", "Subarachnoid hemorrhage", "Subdural hemorrhage" ], ans: 1 },
+                { id: 56, q: "การจับคู่ระหว่างจุดอ้างอิงบนผิวร่างกาย (Surface landmark) และ โครงสร้างกระดูกภายในร่างกาย (Body structure) คู่ใดต่อไปนี้ ไม่สอดคล้องกัน", a: [ "Iliac crest / L4", "Xiphoid process / T10", "Jugular notch / T2-T3", "Anterior superior iliac spine (ASIS) / S1-S2", "Vertebral prominens / C7" ], ans: 4 }
+            ],
+            "66": [
+                { id: 1, q: "การตรวจข้อใดที่ใช้ข้อมูลจากนิวไคลด์ของธาตุอื่นนอกเหนือจากไฮโดรเจนมาช่วยวินิจฉัยโรค", a: [ "MRCP", "MR Spectroscopy", "MRA", "Functional MRI", "DWI" ], ans: 2 },
+                { id: 2, q: "หากนักรังสีเทคนิคทำการสแกนผู้ป่วยด้วยเทคนิค T1W ของสมอง ในแนวตัดขวาง (Axial view) ส่วนประกอบใดของเครื่อง MRI จะถูกใช้งานเพื่อบอกตำแหน่ง slice (Slice selection)", a: [ "Body coil", "y-gradient coils", "x-gradient coils", "z-gradient coils", "Head coil" ], ans: 4 },
+                { id: 3, q: "ข้อใดคือการทดสอบเพื่อประเมินความสัมพันธ์ระหว่างค่า CT number และ ค่าสัมประสิทธิ์การลดทอนรังสี (μ) ของเนื้อเยื่อ", a: [ "CT number uniformity", "CT number linearity", "Image noise", "Spatial resolution evaluation", "Low contrast detectability" ], ans: 2 },
+                { id: 4, q: "ข้อใดคือหน้าที่ของ Bowtie Filter ในเครื่องเอกซเรย์คอมพิวเตอร์ (CT)", a: [ "เพิ่ม Beam uniformity", "เพิ่ม Patient dose", "ลด Scatter ray", "กำหนด Slice thickness", "ลด Scan time" ], ans: 1 },
+                { id: 5, q: "การตรวจภาวะฉุกเฉินในช่องท้อง (Acute abdomen) ประกอบด้วยการถ่ายเอกซเรย์ในท่าใดบ้าง", a: [ "Abdomen Supine และ Abdomen Upright", "Chest PA, Abdomen Upright และ Abdomen Supine", "Chest PA และ Chest Supine", "Abdomen Supine, Abdomen Upright และ Abdomen Lateral Decubitus", "Chest PA, Abdomen Supine, Abdomen Upright และ Abdomen Lateral" ], ans: 2 },
+                { id: 6, q: "หากภาพถ่ายทางรังสีจากระบบ CR และ DR แสดงค่า Deviation Index (DI) มีค่าเป็นบวก (+) หมายความว่าอย่างไร", a: [ "Underexposure", "Overexposure", "Good Image Quality", "Good Exposure Technique", "Meet Target Exposure" ], ans: 2 },
+                { id: 7, q: "ข้อใดกล่าวถึงความหมายของ Health Level 7 (HL7) ได้ถูกต้องที่สุด", a: [ "เป็นโปรแกรมเก็บข้อมูลทางการแพทย์และแผนกรังสี", "เป็นมาตรฐานการแบ่งปันข้อมูลและการแลกเปลี่ยนข้อมูลทางการแพทย์", "เป็นโปรแกรมเก็บข้อมูลของแผนกรังสี", "เป็นระบบปฏิบัติการที่ใช้ในแผนกรังสี", "เป็นโปรแกรมเก็บข้อมูลทางการแพทย์" ], ans: 2 },
+                { id: 8, q: "ภาวะที่มีอากาศอยู่ใน peritoneal cavity (ช่องท้อง) คือข้อใด", a: [ "Pneumothorax", "Pneumoperitoneum", "Volvulus", "Ileus", "Ascites" ], ans: 2 },
+                { id: 9, q: "ข้อใดต่อไปนี้คือสิ่งแปลกปลอม (Artifact) ของการตรวจ Ultrasound ที่มีลักษณะเงาคล้ายบันไดเรียงซ้อนลงไป", a: [ "Displacement", "Shadowing", "Distortion", "Enhancement", "Reverberation" ], ans: 5 },
+                { id: 10, q: "การทำ Calcium scoring ในภาพเอกซเรย์คอมพิวเตอร์ (CT) ใช้สำหรับประเมินพยาธิสภาพใด", a: [ "Cerebral artery stenosis", "Brain viability", "Brain calcification", "Lung nodule", "Coronary artery calcification" ], ans: 5 },
+                { id: 11, q: "ข้อใด ไม่ใช่ ข้อบ่งชี้สำหรับการตรวจเอกซเรย์คอมพิวเตอร์สมอง (CT Brain)", a: [ "Cerebral hemorrhage", "Head injury", "Seizure disorder", "Anxiety", "Stroke" ], ans: 4 },
+                { id: 12, q: "ข้อใดเป็นเทคนิคการทำหัตถการชนิด Non-vascular interventional radiology (รังสีร่วมรักษาชนิดไม่ใช่เส้นเลือด)", a: [ "PTBD, TACE, Biopsy", "PTBD, PCD, TIPS", "PCD, Biopsy, TACE", "TIPS, PCD, Biopsy", "PTBD, PCD, Biopsy" ], ans: 5 },
+                { id: 13, q: "จากภาพรังสีทรวงอกท่า PA ความผิดปกติที่พบ (ลูกศรชี้บริเวณปอดขวาล่างที่มีความทึบรังสีสูงขอบบนโค้งเว้า) คือข้อใด", a: [ "Atelectasis", "Pleural effusion", "Pneumonia", "Emphysema", "Pneumothorax" ], ans: 2 },
+                { id: 14, q: "กรณีที่นักรังสีเทคนิคทำการเปลี่ยนโปรโตคอลการสแกนในส่วนของ data acquisition จาก 64 x 0.6 mm เป็น 64 x 1.5 mm ส่วนใดของเครื่อง CT 64-slice ที่จะทำหน้าที่กำหนด slice width ดังกล่าว", a: [ "Focal spot", "Post-patient collimator", "Bowtie filter", "Detector", "Pre-patient collimator" ], ans: 5 },
+                { id: 15, q: "การตรวจทางรังสีวิทยาใดที่ควรเลือกใช้สารทึบรังสีชนิดไอโอดีน (Iodinated contrast material)", a: [ "Gastritis", "Mass at proximal ilium", "Stomach pain", "Bowel perforate", "Esophagitis" ], ans: 4 },
+                { id: 16, q: "ผู้ป่วยประสบอุบัติเหตุได้รับบาดเจ็บตรงบริเวณกระดูกท้ายทอย (Occipital bone) การจัดท่าสำหรับการถ่ายภาพทางรังสีท่าใดเหมาะสมและปลอดภัยที่สุด", a: [ "Submento-vertex projection", "Water's method", "Towne's method", "Rhese's method", "Posteroanterior projection (PA)" ], ans: 3 },
+                { id: 17, q: "ถ้าต้องการสร้างภาพ MRI ที่สามารถแยกแยะระหว่างเนื้อเยื่อปกติและรอยโรค (Pathology) ได้ชัดเจนที่สุด ควรเลือกใช้ Pulse sequence ในข้อใด", a: [ "T1-weighted และ Proton density", "T1-weighted with turbo spin", "T2-weighted", "Proton density", "T1-weighted" ], ans: 3 },
+                { id: 18, q: "เครื่องเอกซเรย์ในข้อใดที่จำเป็นต้องเลือกใช้หลอดเอกซเรย์แบบ Grid control x-ray tube", a: [ "Mobile Radiography", "Mammography", "Tomography", "Digital Subtraction Angiography (DSA)", "Computed Radiography (CR)" ], ans: 4 },
+                { id: 19, q: "จากภาพการตรวจระบบลำไส้ใหญ่ด้วยสารทึบรังสี (Barium enema) ตำแหน่งหมายเลข 2 ที่ลูกศรชี้คือข้อใด", a: [ "Ascending colon", "Sigmoid colon", "Descending colon", "Cecum", "Transverse colon" ], ans: 5 },
+                { id: 20, q: "การถ่ายภาพรังสีทรวงอกในท่าหรือ Projection ใด ที่สามารถแสดงรอยโรคก้อนเนื้อที่บริเวณยอดปอด (Apical lung mass) ได้ดีที่สุดโดยไม่ถูกกระดูกไหปลาร้าบัง", a: [ "AP upright", "AP supine", "Lateral decubitus", "Lordotic view", "PA upright" ], ans: 4 },
+                { id: 21, q: "จากภาพเอกซเรย์ข้อศอก (Elbow joint) ท่า Lateral ตำแหน่งหมายเลข 1, 2 และ 3 คือกระดูกชิ้นใดตามลำดับ", a: [ "Femur, ulna, radius", "Femur, tibia, fibula", "Femur, radius, ulna", "Humerus, ulna, radius", "Humerus, radius, ulna" ], ans: 4 },
+                { id: 22, q: "ตามหลักการตรวจ Ultrasound ส่วนของเนื้อภาพที่อยู่ใต้ต่อถุงน้ำในตับ (Liver cyst) จะปรากฏลักษณะแบบใด", a: [ "Twinkle artifact", "Posterior enhancement (ความสว่างเพิ่มขึ้นด้านหลัง)", "Mirror artifact", "Posterior shadowing", "Reverberation artifact" ], ans: 2 },
+                { id: 23, q: "จากเดิมถ่ายภาพเอกซเรย์ปอดด้วยเทคนิค 100 kVp 6 mAs ถ้าต้องการปรับให้ภาพมีลักษณะ long scale contrast (เฉดสีเทากว้าง) และผู้ป่วยได้รับปริมาณรังสีน้อยที่สุด เทคนิคข้อใดเหมาะสมที่สุด", a: [ "115 kVp 3 mAs", "115 kVp 6 mAs", "110 kVp 6 mAs", "110 kVp 4 mAs", "110 kVp 3 mAs" ], ans: 1 },
+                { id: 24, q: "ข้อใดคือสิ่งที่นักรังสีเทคนิคควรปฏิบัติ เมื่อแผ่นตัวรับภาพ IP (Imaging Plate) ของระบบ CR ไม่ได้ถูกเปิดใช้งานเกิน 8 ชั่วโมง", a: [ "Secondary erasure", "Primary erasure (ล้างสัญญาณรังสีฉากหลังที่ค้างอยู่)", "Plate throughput", "Plate clean up", "Plate calibration" ], ans: 2 },
+                { id: 25, q: "ชุดรองรับหลอดเอกซเรย์ (Tube support) แบบใด เหมาะสำหรับห้องเอกซเรย์ทั่วไปที่ต้องรองรับคนไข้ในอุบัติเหตุหรือสภาวะที่หลากหลาย และต้องการถ่ายภาพได้ครอบคลุมเกือบทุกส่วนของร่างกาย", a: [ "Fluoroscopy", "Ceiling suspension (แบบห้อยเพดานเคลื่อนที่ได้อิสระ)", "Floor to ceiling", "Floor stand", "Standing type" ], ans: 2 },
+                { id: 26, q: "ในกรณีที่ผู้ป่วยโรคสมองขาดเลือด (Cerebral infarction) มาตรวจ CT brain non-contrast เพื่อติดตามอาการหลังเกิดโรค 1 เดือน จะพบลักษณะของรอยโรค (Lesion) เป็นอย่างไร", a: [ "Lesion จะเป็น Hypodensity มี ring enhancement ชัดเจน", "Lesion จะเป็น Hyperdensity ค่า CT number ใกล้เคียงกับ Hemorrhage", "Lesion จะเป็น Hypodensity แต่มีความโปร่งรังสีสูงขึ้นใกล้เคียงหรือสูงกว่า CSF เล็กน้อย", "Lesion จะเป็น Hyperdensity มี ring enhancement ชัดเจน", "Lesion จะเป็น Hyperdensity ทั้งก้อน" ], ans: 3 },
+                { id: 27, q: "ข้อใดเป็นท่าถ่ายภาพเอกซเรย์ที่เป็นท่ามาตรฐานหรือRoutine ในการตรวจเต้านม (Mammography)", a: [ "Craniocaudal และ Mediolateral", "Craniocaudal และ Mediolateral oblique (CC & MLO)", "Caudocranial และ Mediolateral oblique", "Caudocranial และ Mediolateral", "Craniocaudal และ Lateromedial" ], ans: 2 },
+                { id: 28, q: "การปรับตั้งค่าพารามิเตอร์ให้ค่าแรงดันไฟฟ้า (kVp) สูงขึ้นจากค่าเดิม จะส่งผลกระทบอย่างไรต่อคุณภาพของภาพรังสี", a: [ "Contrast เท่าเดิม Density เพิ่มขึ้น", "Contrast เพิ่มขึ้น Density เท่าเดิม", "Contrast ลดลง Density เพิ่มขึ้น", "Contrast เพิ่มขึ้น Density เพิ่มขึ้น", "Contrast ลดลง Density ลดลง" ], ans: 3 },
+                { id: 29, q: "โครงสร้างปุ่มกระดูกตาตุ่มนอก (Lateral malleolus) จัดเป็นส่วนประกอบของกระดูกชิ้นใด", a: [ "Ulna", "Fibula", "Humerus", "Talus", "Tibia" ], ans: 2 },
+                { id: 30, q: "ขนาดของจุดภาพ (Pixel size) มีผลกระทบโดยตรงต่อคุณภาพของภาพเอกซเรย์ในระบบ Digital Radiography ตามข้อใด", a: [ "Gray scale", "Noise", "Resolution (Spatial resolution)", "Density", "Contrast" ], ans: 3 },
+                { id: 31, q: "อวัยวะในกลุ่มข้อใดต่อไปนี้ ทั้งหมดวางตัวอยู่ในช่องท้อง (Abdominal cavity)", a: [ "Liver, spleen และ stomach", "Heart และ lungs", "Testes และ ovaries", "Vocal fold และ larynx", "Reproductive organs และ urinary bladder" ], ans: 1 },
+                { id: 32, q: "ระยะเวลาที่ใช้ในการกวาดสัญญาณสร้างภาพของเครื่อง MRI (Scan time) ขึ้นอยู่กับตัวแปรหลักในข้อใด", a: [ "TR, NEX", "TE, NEX, number of frequency", "TR, NEX, slice thickness", "TR, NEX, number of frequency encoding", "TR, NEX, number of phase encoding" ], ans: 5 },
+                { id: 33, q: "การใช้งานแผ่นกรองรังสีกระเจิง (Grid) มีผลต่อคุณภาพของภาพรังสีอย่างไร เมื่อกำหนดให้คงค่าพารามิเตอร์ kVp และ mAs ไว้เท่าเดิม", a: [ "Contrast เพิ่มขึ้น Density ลดลง", "Contrast เพิ่มขึ้น Density เท่าเดิม", "Contrast เพิ่มขึ้น Density เพิ่มขึ้น", "Contrast ลดลง Density ลดลง", "Contrast ลดลง Density เพิ่มขึ้น" ], ans: 1 },
+                { id: 34, q: "หากแพทย์สงสัยภาวะมีน้ำในโพรงเยื่อหุ้มปอดปริมาณเล็กน้อยในปอดด้านซ้าย (Minimal Left Pleural effusion) นักรังสีเทคนิคควรถ่ายภาพรังสีทรวงอกในท่าใด จึงจะช่วยให้ตรวจพบรอยโรคได้ดีที่สุด", a: [ "Left lateral", "Lordotic", "Right lateral decubitus", "Left lateral decubitus (นอนตะแคงเอาข้างซ้ายลงต่ำ)", "PA upright" ], ans: 4 },
+                { id: 35, q: "ปรากฏการณ์ความไวต่อการรบกวนของสนามแม่เหล็ก (Magnetic susceptibility หรือ T2* effect) จะตรวจพบหรือแสดงผลได้ชัดเจนเมื่อเลือกใช้ MR pulse sequence ในข้อใด", a: [ "IR (Inversion recovery)", "FSE (Fast spin echo)", "GRE (Gradient echo)", "CINE", "EPI (Echo planar imaging)" ], ans: 3 },
+                { id: 36, q: "ปุ่มตำแหน่งอ้างอิงบนผิวร่างกาย (Bony landmark) ข้อใดที่วางตัวอยู่ตรงกับระดับของกระดูกสันหลังส่วนอกข้อ T4-T5", a: [ "Xiphoid process", "Vertebral prominence", "Sternal angle (มุมกระดูกอก)", "Suprasternal notch", "Iliac crest" ], ans: 3 },
+                { id: 37, q: "ข้อต่อที่อยู่ระหว่างกระดูกนิ้วมือชิ้นแรกส่วนต้น (Proximal phalanx) และส่วนปลาย (Distal phalanx) ของนิ้วหัวแม่มือ (Thumb) คือข้อใด", a: [ "Proximal interphalangeal joint", "Distal interphalangeal joint", "Carpometacarpal joint", "Interphalangeal joint (IP joint)", "Metacarpophalangeal joint" ], ans: 4 },
+                { id: 38, q: "การใช้งานเครื่อง Ultrasound ด้วยฟังก์ชันการทำงานแบบ Tissue Harmonic Imaging (THI) มีความเหมาะสมและช่วยเพิ่มประสิทธิภาพสูงสุดสำหรับการตรวจหารอยโรคในข้อใด", a: [ "Isoechoic lesion", "Stone", "Cyst", "Hyperechoic lesion", "Hemangioma" ], ans: 3 },
+                { id: 39, q: "ในการถ่ายภาพเอกซเรย์กระดูกและข้อขนาดเล็ก (Small bones and joints) ปัจจัยทางเทคนิคข้อใดต่อไปนี้มีผลกระทบต่อความคมชัดเชิงพื้นที่ (Image resolution) มากที่สุด", a: [ "kVp", "SID", "mAs", "Field size", "Focal spot size" ], ans: 5 },
+                { id: 40, q: "เจลสื่อคลื่นเสียง (Acoustic Gel) มีบทบาทหน้าที่ช่วยในการตรวจคลื่นความถี่สูง (Ultrasound) ในแง่ใดมากที่สุด", a: [ "ช่วยให้เสียงมีพลังงานมากขึ้น", "ช่วยเพิ่มความยาวของคลื่นมากขึ้น", "ช่วยให้คลื่นเสียงส่งผ่านรอยต่อ (Interface) ระหว่างหัวตรวจกับผิวหนังได้ดีโดยการไล่อากาศออก", "ช่วยเพิ่มการสะท้อนคลื่นเสียงมากขึ้น", "ช่วยให้คลื่นเสียงมีความถี่สูงขึ้น" ], ans: 3 },
+                { id: 41, q: "สัญญาณภาพฝังตัว (Latent image) ที่เกิดขึ้นบนแผ่น Imaging plate ของระบบ CR จะถูกอ่านสัญญาณออกมาเป็นข้อมูลภาพดิจิทัลได้โดยวิธีการใด", a: [ "กระตุ้นด้วยรังสีเอกซ์", "กระตุ้นด้วยแสงเลเซอร์ในช่วงคลื่นแสงสีแดง (Red laser)", "กระตุ้นด้วยความร้อน", "กระตุ้นด้วยเลเซอร์ช่วงสีน้ำเงิน", "กระตุ้นด้วยแสงธรรมดา" ], ans: 2 },
+                { id: 42, q: "ผู้ป่วยประสบอุบัติเหตุบริเวณข้อมือ หากต้องการถ่ายภาพรังสีเพื่อดูพยาธิสภาพหรือรอยแตกหักของกระดูก Scaphoid แต่พบว่าการถ่ายภาพท่าพื้นฐาน PA และ Lateral ยังไม่เห็นรอยหักชัดเจน ควรจัด Position ของมือเพิ่มเติมในท่าใด", a: [ "PA Radial deviation", "AP oblique", "PA oblique", "PA Ulnar deviation", "Carpal tunnel view" ], ans: 4 },
+                { id: 43, q: "ผู้ป่วยประสบอุบัติเหตุทางรถยนต์ พบว่ามีอาการปัสสาวะเป็นเลือดปน และสงสัยภาวะกระเพาะปัสสาวะฉีกขาด (Rupture bladder) การตรวจทางรังสีวิทยาข้อใดมีความจำเพาะเหมาะสมที่สุด", a: [ "Voiding cystourethrography", "Retrograde pyelography", "Cystography", "Antegrade pyelography", "Intravenous pyelography" ], ans: 3 },
+                { id: 44, q: "จากภาพเอกซเรย์คอมพิวเตอร์ (CT scan) ทรวงอกตัดขวาง ตำแหน่งที่ลูกศรชี้ (เส้นเลือดใหญ่ที่ออกจากหัวใจห้องล่างขวาไปปอด) คืออะไร", a: [ "Left superior pulmonary vein", "Arch of aorta", "Left pulmonary artery", "Right superior pulmonary vein", "Pulmonary trunk" ], ans: 5 },
+                { id: 45, q: "สนามแม่เหล็กหลัก (B0) ที่สร้างขึ้นมาจากเทคโนโลยีในข้อใด ที่สามารถให้ขนาดและกำลังของความเข้มสนามแม่เหล็กสูงที่สุดในงานวิจัยและการวินิจฉัย", a: [ "ขดลวดแม่เหล็กไฟฟ้า", "แท่งแม่เหล็กชั่วคราว", "ขดลวดตัวนำยิ่งยวด (Superconducting magnet)", "ขดลวดต้านทาน", "แท่งแม่เหล็กถาวร" ], ans: 3 },
+                { id: 46, q: "ในกรณีที่มีกระดูกฝ่ามือชิ้นที่ 3 หัก (3rd Metacarpal fracture) ท่าถ่ายภาพรังสีข้อใดที่แสดงให้เห็นขอบและรอยแตกหักแยกตัวได้ชัดเจนดีที่สุด", a: [ "AP, Lateral", "PA Oblique, Lateral", "PA, Lateral", "AP Oblique, Lateral", "PA, PA Oblique" ], ans: 2 },
+                { id: 47, q: "ในภาพการตรวจอัลตราซาวด์ (Ultrasound) ลักษณะเนื้อภาพที่ปรากฏอยู่บริเวณใต้ต่อก้อนนิ่วในถุงน้ำดี (Gallstone) จะมีลักษณะจำเพาะแบบใด", a: [ "Acoustic enhancement", "Hyperechoic", "Acoustic shadowing", "Anechoic", "Hypoechoic" ], ans: 3 },
+                { id: 48, q: "ส่วนโค้งของฝ่ามือฝ่าเท้าตามแนวยาว (Longitudinal arch) ของเท้า จะสามารถสังเกตและมองเห็นพยาธิสภาพความผิดปกติได้ชัดเจนที่สุดจากภาพรังสีในท่าใด", a: [ "Lateromedial view", "Anteroposterior view", "Oblique view", "Mediolateral view", "Lateral weight-bearing view" ], ans: 5 },
+                { id: 49, q: "ระนาบทางกายวิภาค (Anatomical plane) ในข้อใดที่ใช้สำหรับแบ่งสัดส่วนร่างกายออกเป็นส่วนบน (Superior) และส่วนล่าง (Inferior)", a: [ "Sagittal plane", "Coronal plane", "Transverse plane", "Longitudinal plane", "Frontal plane" ], ans: 3 },
+                { id: 50, q: "โครงสร้างเส้นประสาทไขสันหลัง (Spinal cord) วางตัวทอดยาวเชื่อมต่อลงมาจากสมองส่วนใด", a: [ "Cerebrum", "Pons", "Medulla oblongata", "Cerebellum", "Mid brain" ], ans: 3 },
+                { id: 51, q: "ค่าความลึกของบิต (Bit depth) ในระบบการจัดการภาพดิจิทัล ใช้สำหรับระบุคุณลักษณะข้อใดของภาพ", a: [ "จำนวนจุดภาพ", "ความแตกต่างของสีต่างๆ", "ขนาดของจุดภาพ", "จำนวนแม่สีแสง", "จำนวนระดับความเข้มของเฉดสี (Shades of gray)" ], ans: 5 },
+                { id: 52, q: "อุปกรณ์ชิ้นใดที่ใช้ในห้องเอกซเรย์สำหรับตรวจสอบความถูกต้องแม่นยำของขอบเขตแสงไฟจำลองอ้างอิงกับลำรังสีจริง (Light field กับ X-ray field alignment)", a: [ "Spinning top", "Wire mesh", "Collimator test tool", "Star test pattern", "Slit camera test tool" ], ans: 3 },
+                { id: 53, q: "การสร้างภาพสมองด้วยเครื่อง MRI แบบ T2-weighted image ปรากฏว่าน้ำหล่อเลี้ยงสมองและไขสันหลัง (CSF) จะมองเห็นเป็นสัญญาณสีขาวสว่าง (Bright signal) เนื่องมาจากคุณสมบัติทางฟิสิกส์ในข้อใด", a: [ "CSF มีค่า T2 relaxation time สั้น", "CSF มีค่า relaxation time ยาว", "CSF มีค่า T2 relaxation time ยาว", "CSF มีค่า relaxation time สั้น", "CSF มีการไหลเวียนอยู่ภายใน Ventricular system" ], ans: 3 },
+                { id: 54, q: "ข้อใดเป็นสารเพิ่มความแตกต่างของเนื้อภาพ หรือสารทึบรังสี (Contrast media) ที่นิยมนำมาใช้เสริมในการตรวจดูลำไส้ใหญ่ด้วยเอกซเรย์คอมพิวเตอร์ (CT Colonoscopy)", a: [ "Barium", "Iodinated contrast", "Air", "Water", "Oil" ], ans: 3 },
+                { id: 55, q: "ชิ้นส่วนหรือโครงสร้างภายในหลอดผลิตรังสีเอกซ์ (X-ray tube) ข้อใดที่มีส่วนเกี่ยวข้องโดยตรงต่อความสามารถในการแยกแยะรายละเอียดเชิงพื้นที่ (Spatial resolution) ของภาพรังสี", a: [ "Size of focal spot", "Size of collimator", "Type of target material", "Type of filter material", "Field of radiation" ], ans: 1 },
+                { id: 56, q: "ในการทำกระบวนการตรวจสอบและควบคุมคุณภาพ (QC) ของเครื่องเอกซเรย์คอมพิวเตอร์ (CT) ประจำวัน/ประจำสัปดาห์ ข้อใดต่อไปนี้คือหัวข้อการประเมินที่จำเป็นต้องใช้ Water phantom ทรงกลมมาตรฐานในการสแกนทดสอบ", a: [ "Low contrast resolution", "Spatial resolution", "CT number accuracy", "Gantry tilting", "CT number linearity" ], ans: 3 }
+            ]
+        };
+
+        let activeYear = "64";
+        let liveExamData = JSON.parse(JSON.stringify(rawExamData)); // Clone ข้อมูลจำลองสำหรับใช้งานต้นแบบ
+
+        // ==========================================================
+        // 2. ส่วนการตั้งค่าแอปพลิเคชัน FIREBASE
+        // ==========================================================
+        // แนะนำ: ให้สร้างโปรเจกต์ Firebase และเปิดใช้งาน Realtime Database 
+        // จากนั้นให้นำ config ชุดของท่านมาแทนที่ข้อมูลจำลองด้านล่างนี้ได้เลยครับ
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY_HERE",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        let isFirebaseConnected = false;
+        let db;
+
+        // ดักจับข้อยกเว้นหากผู้ใช้เปิดรันไฟล์เฉยๆ โดยยังไม่เปลี่ยน API Key
+        try {
+            if (firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY_HERE") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                isFirebaseConnected = true;
+                console.log("🟢 เชื่อมต่อคลังข้อมูลหลัก Firebase Realtime Database สำเร็จ");
+            } else {
+                console.warn("🟡 วิ่งโหมดออฟไลน์: ระบบตรวจพบค่าคีย์จำลอง จะใช้หน่วยความจำเครื่องชั่วคราวแทน");
+            }
+        } catch (error) {
+            console.error("🔴 เกิดข้อผิดพลาดในระบบการเชื่อมต่อคลาวด์: ", error);
+        }
+
+        // เริ่มต้นโหลดระบบเมื่อเอกสารพร้อม
+        window.onload = function() {
+            if (isFirebaseConnected) {
+                // สมัครรับข้อมูลการอัปเดตเฉลยข้อสอบจากคลาวด์แบบ Realtime
+                db.ref("exams").on("value", (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        // อัปเดตข้อมูลในแอปพลิเคชันด้วยข้อมูลล่าสุดจาก Firebase
+                        for (let yr in data) {
+                            if (liveExamData[yr]) {
+                                data[yr].forEach(updatedItem => {
+                                    let match = liveExamData[yr].find(o => o.id === updatedItem.id);
+                                    if (match) {
+                                        match.ans = updatedItem.ans;
+                                        match.updatedBy = updatedItem.updatedBy;
+                                        match.updatedAt = updatedItem.updatedAt;
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    renderQuiz();
+                });
+            } else {
+                renderQuiz();
+            }
+        };
+
+        // ==========================================================
+        // 3. ฟังก์ชันระบบจัดการหน้าจอ (UI Logic)
+        // ==========================================================
+        
+        function switchYear(year) {
+            activeYear = year;
+            // สลับสถานะของปุ่มด้านบน
+            document.querySelectorAll('.year-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-blue-700', 'shadow-md');
+                btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-500');
+            });
+            const activeBtn = document.getElementById(`btn-${year}`);
+            activeBtn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-500');
+            activeBtn.classList.add('bg-white', 'text-blue-700', 'shadow-md');
+
+            // อัปเดตหัวข้อประจำปี
+            document.getElementById('current-year-title').innerText = `ชุดข้อสอบประจำปี 25${year === '64' ? '64' : year === '65' ? '65' : '66'}`;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = "";
+            const list = liveExamData[activeYear];
+            document.getElementById('question-count').innerText = `${list.length} ข้อ`;
+
+            list.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm p-5 border border-gray-100 relative";
+                
+                // หัวข้อคำถาม
+                let html = `
+                    <div class="flex justify-between items-start gap-4 mb-3">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-md">ข้อที่ ${index + 1}</span>
+                        <button onclick="openEditModal('${activeYear}', ${item.id})" class="text-xs bg-gray-100 text-gray-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg font-medium border border-gray-200 flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไขเฉลยข้อนี้ (Firebase)
+                        </button>
+                    </div>
+                    <p class="font-semibold text-gray-800 text-base mb-4">${item.q}</p>
+                    <div class="grid grid-cols-1 gap-2 mb-4">
+                `;
+
+                // ตัวเลือกข้อสอบ 1 - 5
+                item.a.forEach((opt, oIdx) => {
+                    const isCorrect = (oIdx + 1) === item.ans;
+                    const badge = isCorrect 
+                        ? `<span class="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1 font-bold shadow-sm"><i class="fa-solid fa-check"></i> เฉลยข้อนี้</span>` 
+                        : '';
+                    const borderStyle = isCorrect ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 bg-gray-50';
+
+                    html += `
+                        <div class="border ${borderStyle} rounded-lg p-3 flex justify-between items-center text-sm">
+                            <span class="${isCorrect ? 'text-emerald-900 font-medium' : 'text-gray-700'}">${oIdx + 1}. ${opt}</span>
+                            ${badge}
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+
+                // ท้ายข้อความแสดงประวัติผู้เขียนข้อมูลการแก้ไข
+                if (item.updatedBy) {
+                    html += `
+                        <div class="mt-2 text-xs text-gray-400 bg-gray-50 rounded-lg p-2 flex items-center gap-2 border border-dashed border-gray-200">
+                            <i class="fa-solid fa-circle-info text-blue-400"></i>
+                            <span>แก้ไขล่าสุดโดยคุณ <b>${escapeHtml(item.updatedBy)}</b> เมื่อ ${item.updatedAt}</span>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+        }
+
+        // ==========================================================
+        // 4. ระบบจัดการข้อมูลส่วนการแก้ไข (Modal & Operations)
+        // ==========================================================
+        
+        function openEditModal(year, id) {
+            const item = liveExamData[year].find(o => o.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-year').value = year;
+            document.getElementById('modal-q-id').value = id;
+            document.getElementById('modal-q-text').innerText = `คำถาม: ${item.q}`;
+            
+            const optionsContainer = document.getElementById('modal-options-container');
+            optionsContainer.innerHTML = "";
+
+            // เรนเดอร์ช่อง Radio เพื่อเลือกคำตอบใหม่
+            item.a.forEach((opt, oIdx) => {
+                const val = oIdx + 1;
+                const checked = val === item.ans ? 'checked' : '';
+                optionsContainer.innerHTML += `
+                    <label class="flex items-center gap-3 p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer text-sm font-medium">
+                        <input type="radio" name="newAns" value="${val}" ${checked} class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span>${val}. ${opt}</span>
+                    </label>
+                `;
+            });
+
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            document.getElementById('edit-form').reset();
+        }
+
+        function saveEdit(e) {
+            e.preventDefault();
+            const year = document.getElementById('modal-year').value;
+            const id = parseInt(document.getElementById('modal-q-id').value);
+            const user = document.getElementById('modal-user').value.trim();
+            const selectedRadio = document.querySelector('input[name="newAns"]:checked');
+
+            if (!selectedRadio || !user) {
+                alert("กรุณากรอกข้อมูลและเลือกข้อเฉลยให้ครบถ้วนครับ ⚠️");
+                return;
+            }
+
+            const newAnswerVal = parseInt(selectedRadio.value);
+            
+            // ตั้งค่าแสตมป์เวลาบันทึกภาษาไทย
+            const now = new Date();
+            const timestampStr = now.toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            }) + " เวลา " + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + " น.";
+
+            if (isFirebaseConnected) {
+                // ดึงข้อมูลภาพรวมล่าสุดเพื่ออัปเดตตำแหน่งอาร์เรย์ในโปรเจกต์ Firebase
+                db.ref(`exams/${year}`).once('value').then((snapshot) => {
+                    let remoteItems = snapshot.val() || [];
+                    let itemIdx = remoteItems.findIndex(o => o && o.id === id);
+
+                    // หากข้อมูลโครงสร้างใน Firebase ยังไม่เคยถูกสร้างขึ้น ให้ส่งโครงสร้างเริ่มต้นขึ้นไปก่อน
+                    if (itemIdx === -1) {
+                        remoteItems = liveExamData[year];
+                        itemIdx = remoteItems.findIndex(o => o.id === id);
+                    }
+
+                    // ปรับแต่งค่าเฉพาะจุด
+                    remoteItems[itemIdx].ans = newAnswerVal;
+                    remoteItems[itemIdx].updatedBy = user;
+                    remoteItems[itemIdx].updatedAt = timestampStr;
+
+                    // บันทึกกลับลงเซิร์ฟเวอร์ Firebase ของแท้
+                    db.ref(`exams/${year}`).set(remoteItems)
+                        .then(() => {
+                            closeModal();
+                            alert("🎉 บันทึกข้อมูลและอัปเดตเฉลยในฐานข้อมูล Firebase เรียบร้อยแล้ว!");
+                        })
+                        .catch(err => {
+                            alert("เกิดข้อผิดพลาดในการเขียนลง Firebase: " + err.message);
+                        });
+                });
+            } else {
+                // โหมดรันแบบออฟไลน์สำรองชั่วคราวบนหน่วยความจำเครื่องหน้าเว็บ (Local Memory Backup)
+                let item = liveExamData[year].find(o => o.id === id);
+                if (item) {
+                    item.ans = newAnswerVal;
+                    item.updatedBy = user + " (โหมดออฟไลน์ Local)";
+                    item.updatedAt = timestampStr;
+                }
+                renderQuiz();
+                closeModal();
+                alert("👍 แก้ไขในหน่วยความจำเบราว์เซอร์ชั่วคราวเรียบร้อย (ระบบออฟไลน์อยู่ ข้อมูลจะรีเซ็ตหากกด Refresh)");
+            }
+        }
+
+        // ฟังก์ชันช่วยเข้ารหัสข้อความป้องกันการโจมตีประเภท XSS
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
