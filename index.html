@@ -385,7 +385,7 @@
         }
 
         // ==========================================================
-        // 4. ส่วนเรนเดอร์หน้าจอหลัก UI
+        // 4. ส่วนเรนเดอร์หน้าจอหลัก UI (เวอร์ชันรองรับรูปภาพแล้วครับคุณเบียร์ 🖼️)
         // ==========================================================
         function renderQuiz() {
             const container = document.getElementById('quiz-container');
@@ -407,8 +407,18 @@
                         </button>
                     </div>
                     <p class="font-semibold text-gray-800 text-base mb-4">${item.q}</p>
-                    <div class="grid grid-cols-1 gap-2 mb-2">
                 `;
+
+                // 🌟 เพิ่มจุดนี้: เช็กว่าถ้าในข้อมูลมีรูปภาพ (item.img) ให้สร้างแท็กรูปโชว์ขึ้นมา
+                if (item.img) {
+                    html += `
+                        <div class="mb-4 max-w-md mx-auto overflow-hidden rounded-lg border border-gray-200 shadow-sm bg-gray-50 flex justify-center items-center p-2">
+                            <img src="${item.img}" alt="รูปประกอบข้อที่ ${index + 1}" class="max-w-full h-auto rounded-md object-contain">
+                        </div>
+                    `;
+                }
+
+                html += `<div class="grid grid-cols-1 gap-2 mb-2">`;
 
                 item.a.forEach((opt, oIdx) => {
                     const currentOptionNum = oIdx + 1;
@@ -417,7 +427,6 @@
                     
                     let borderStyle = 'border-gray-200 bg-gray-50 hover:bg-gray-100/70';
 
-                    // สไตล์เมื่อผ่านการกดคำตอบ (เอาข้อความป้ายกำกับออกตามคำสั่ง)
                     if (hasAnswered) {
                         if (isCorrectSolution) {
                             borderStyle = 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold';
@@ -440,7 +449,6 @@
 
                 html += `</div>`;
 
-                // คลีนกล่องรายงานผลด้านล่าง เหลือแค่คำว่า "เฉลยคือข้อ X"
                 if (hasAnswered) {
                     html += `
                         <div class="mt-2 text-xs border border-blue-200 bg-blue-50 text-blue-800 p-2.5 rounded-lg flex items-center gap-1.5 font-semibold animate-fade-in">
@@ -449,7 +457,6 @@
                     `;
                 }
 
-                // ประวัติตามคลาวด์ Firebase
                 const originalItem = rawExamData[activeYear].find(o => o.id === item.id);
                 if (originalItem && originalItem.updatedBy) {
                     html += `
