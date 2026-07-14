@@ -14,7 +14,7 @@
         body { font-family: 'Sarabun', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body class="bg-gray-50 min-h-screen text-gray-800 pb-24">
 
     <!-- Header -->
     <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-md sticky top-0 z-40">
@@ -31,18 +31,43 @@
         </div>
     </header>
 
+    <!-- Sticky Timer Dashboard (แถบแสดงเวลาถอยหลังแบบตรึงหน้าจอ) -->
+    <div id="timer-dashboard" class="bg-amber-500 text-white sticky top-[68px] z-30 shadow-sm hidden transition-all">
+        <div class="max-w-5xl mx-auto px-4 py-2.5 flex justify-between items-center font-bold text-sm sm:text-base">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-stopwatch animate-pulse"></i> โหมดฝึกทำข้อสอบจับเวลา
+            </div>
+            <div id="countdown-clock" class="bg-black/20 px-3 py-1 rounded-lg tracking-wider text-xl font-mono">
+                00:00
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="max-w-5xl mx-auto px-4 py-8">
         
         <!-- แถบเครื่องมือช่วยฝึกฝน -->
         <div class="bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-600">
-                <i class="fa-solid fa-graduation-cap text-blue-500 mr-1"></i>
-                <b>ข้อที่เป็นรูป ไม่ได้ใส่รูปมาให้นะครับ เปิดในชีทไปก่อนนะ ถ้ามีเวลาเดี๋ยวจะลองใส่ให้ครับ</b>
+            <div id="info-text" class="text-sm text-gray-600">
+                <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                <b>โหมดปกติ: คลิกตัวเลือกเพื่อตรวจคำตอบทันที และกดเปลี่ยนช้อยส์ใหม่ได้ตลอดเวลาครับ</b>
             </div>
-            <button onclick="randomizeQuestions()" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition-all transform active:scale-95">
-                <i class="fa-solid fa-shuffle"></i> สุ่มลำดับข้อสอบและช้อยส์ (Random) 🎲
-            </button>
+            <div class="flex items-center gap-2 w-full sm:w-auto flex-col sm:flex-row">
+                <button id="btn-exam-mode" onclick="toggleExamMode()" class="w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition-all transform active:scale-95 whitespace-nowrap">
+                    <i class="fa-solid fa-hourglass-start"></i> เริ่มโหมดจับเวลา (Exam Mode)
+                </button>
+                <button onclick="randomizeQuestions()" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition-all transform active:scale-95 whitespace-nowrap">
+                    <i class="fa-solid fa-shuffle"></i> สุ่มข้อสอบ (Random) 🎲
+                </button>
+            </div>
+        </div>
+
+        <!-- โซนแสดงคะแนนสรุปเมื่อส่งข้อสอบ -->
+        <div id="result-card" class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-6 text-center hidden transition-all animate-fade-in">
+            <i class="fa-solid fa-trophy text-4xl text-amber-500 mb-2"></i>
+            <h3 class="text-xl font-bold text-emerald-900">สรุปคะแนนการสอบของคุณเบียร์</h3>
+            <p id="score-display" class="text-4xl font-extrabold text-emerald-600 my-2">0 / 0</p>
+            <p class="text-gray-600 text-sm">ระบบทำการเปิดแท็บเฉลยและตรวจคะแนนข้อที่เลือกผิด/ถูกเรียบร้อยแล้ว ด้านล่างนี้ครับ 👇</p>
         </div>
 
         <!-- โซนแสดงปีปัจจุบัน -->
@@ -53,6 +78,13 @@
 
         <!-- รายการข้อสอบจะถูกเรนเดอร์ตรงนี้ -->
         <div id="quiz-container" class="space-y-6"></div>
+
+        <!-- ปุ่มส่งข้อสอบใหญ่ท้ายหน้าจอ -->
+        <div id="submit-area" class="mt-8 text-center hidden">
+            <button onclick="submitExam()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-md hover:shadow-lg transition-all transform active:scale-95 w-full sm:w-64">
+                <i class="fa-solid fa-paper-plane mr-2"></i> ส่งข้อสอบและตรวจคะแนน
+            </button>
+        </div>
     </main>
 
     <!-- Modal ฟอร์มสำหรับแก้ไขเฉลยข้อสอบ -->
@@ -159,7 +191,7 @@
                 { id: 5, q: "Bifurcation ของ Abdominal aorta เป็น Common iliac artery อยู่ที่ระดับกระดูกสันหลังข้อใด", a: [ "L4-L5", "T4-T5", "L1", "T12" ], ans: 1 },
                 { id: 6, q: "ท่าใดดีที่สุดสำหรับตรวจ Occipital skull fracture", a: [ "Towne view", "Caldwell view", "Waters view", "Lateral view" ], ans: 1 },
                 { id: 7, q: "การตั้งค่า Window width (WW) เท่ากับ 84 และค่า Window level (WL) เท่ากับ 16 จากเครื่อง CT ข้อใดต่อไปนี้สามารถมองเห็นรายละเอียดเนื้อเยื่อได้", a: [ "Brain (35 HU)", "Water (0 HU)", "Muscle (20 HU)", "Fat (-40 HU)", "Spleen (45 HU)" ], ans: 1 },
-                { id: 8, q: "ในหลอดเอกซเรย์ ข้อใดที่เกี่ยวข้องโดยตรงกับ Spatial resolution", a: [ "Type of filter material", "Field of radiation", "Size of collimator", "Size of focal spot", "Type of target material" ], ans: 4 },
+                { id: 8, q: "inหลอดเอกซเรย์ ข้อใดที่เกี่ยวข้องโดยตรงกับ Spatial resolution", a: [ "Type of filter material", "Field of radiation", "Size of collimator", "Size of focal spot", "Type of target material" ], ans: 4 },
                 { id: 9, q: "Slip ring technology ในเครื่อง CT มีประโยชน์อย่างไร", a: [ "นำไฟฟ้าเข้าสู่หลอดเอกซเรย์ได้อย่างต่อเนื่องในขณะหมุนสแกน", "ช่วยให้ผู้ป่วยได้รับปริมาณรังสีลดลง", "ช่วยควบคุมปริมาณรังสีที่ผ่านตัวผู้ป่วยและไปตกกระทบที่หัววัดรังสี", "ช่วยป้องกันกระแสไฟฟ้าลัดวงจรภายใน Gantry", "เป็นหน่วยจ่ายไฟฟ้าสำรองให้กับเครื่องเอกซเรย์คอมพิวเตอร์" ], ans: 1 },
                 { id: 10, q: "ข้อใดเป็นท่าทั่วไปที่ใช้ในการถ่ายภาพเพื่อดูโพรงอากาศรอบจมูก (Paranasal sinuses)", a: [ "Caldwell & Towne", "Waters open-mouth & Towne", "Towne & Submentovertex", "Submentovertex & Lateral", "Caldwell & Waters open-mouth" ], ans: 5 },
                 { id: 11, q: "ข้อใดเป็นการทดสอบเพื่อตรวจสอบความถูกต้องของศูนย์กลางลำรังสีและขอบเขตของลำรังสี (Light field กับ X-ray field alignment)", a: [ "Collimator and beam alignment", "mAs reciprocity", "HVL", "Tube current consistency", "Grid alignment" ], ans: 1 },
@@ -176,8 +208,8 @@
                 { id: 23, q: "วิธีการวินิจฉัยด้วยภาพทางรังสีวิทยาใด สามารถเห็นรอยโรคหรือความผิดปกติของเนื้อปอด (Lung parenchyma) ได้ละเอียดและชัดเจนที่สุด", a: [ "Radiography", "Magnetic Resonance Imaging", "Angiography", "Ultrasonography", "Computed Tomography" ], ans: 5 },
                 { id: 24, q: "ข้อใดเป็นท่าถ่ายภาพรังสีที่เป็นท่าทั่วไป (Routine views) ในการตรวจเต้านม (Mammography)", a: [ "Craniocaudal และ Mediolateral oblique", "Caudocranial และ Mediolateral", "Craniocaudal และ Mediolateral", "Caudocranial และ Mediolateral oblique", "Craniocaudal และ Lateromedial" ], ans: 1 },
                 { id: 25, q: "การเตรียมตัวในข้อใด ไม่จำเป็น สำหรับการตรวจเอกซเรย์คอมพิวเตอร์ช่องท้องทั้งหมด (CT Whole abdomen)", a: [ "ตรวจเลือดดูค่า GFR", "งดน้ำและอาหารก่อนการตรวจอย่างน้อย 6 ชั่วโมง", "ตรวจเลือดดูค่า BUN, Creatinine", "ตรวจปัสสาวะ (Urine analysis)", "รับประทานยาระบายก่อนการตรวจ" ], ans: 4 },
-                { id: 26, q: "ข้อต่อที่อยู่บริเวณด้าน Lateral ของกระดูกไหปลาร้า (Clavicle) คือข้อใด", a: [ "Acromioclavicular joint", "Sternoclavicular joint", "Glenohumeral joint", "Scapulohumeral joint", "Manubriosternal joint" ], ans: 1 },
-                { id: 27, q: "ข้อใดคือท่าถ่ายภาพเอกซเรย์ที่เป็น Routine ของข้อเท้า (Ankle)", a: [ "AP and Oblique view", "AP mortise (15°) and Lateral view", "AP stress and Oblique view", "AP and Lateral view", "AP and AP mortise (15°) view" ], ans: 4 },
+                { id: 26, q: "ข้อใดคือท่าถ่ายภาพเอกซเรย์ที่เป็น Routine ของข้อเท้า (Ankle)", a: [ "AP and Oblique view", "AP mortise (15°) and Lateral view", "AP stress and Oblique view", "AP and Lateral view", "AP and AP mortise (15°) view" ], ans: 4 },
+                { id: 27, q: "ข้อต่อที่อยู่บริเวณด้าน Lateral ของกระดูกไหปลาร้า (Clavicle) คือข้อใด", a: [ "Acromioclavicular joint", "Sternoclavicular joint", "Glenohumeral joint", "Scapulohumeral joint", "Manubriosternal joint" ], ans: 1 },
                 { id: 28, q: "ข้อใดต่อไปนี้กล่าวถึงค่า Deviation Index (DI) ในระบบถ่ายภาพรังสีดิจิทัลได้ถูกต้อง", a: [ "เป็นตัวเลขบอกปริมาณรังสีที่หลอดเอกซเรย์ผลิตออกมาโดยตรง", "เป็นตัวกำหนดปริมาณของ image noise ในภาพโดยตรง", "หาก DI มีค่ามาก แสดงว่า ปริมาณรังสีที่ผู้ป่วยได้รับยิ่งมีความเหมาะสมมากขึ้น", "เป็นค่าที่สื่อถึงความเบี่ยงเบนของปริมาณรังสีที่ตกกระทบตัวรับภาพ (Image receptor) จากค่าอ้างอิงที่เหมาะสม", "ค่า DI จะถูกกำหนดตายตัวโดยบริษัทผู้ผลิต ทำให้ไม่สามารถนำมาใช้ปรับปรุงคุณภาพภาพได้" ], ans: 4 },
                 { id: 29, q: "การเคลื่อนไหวของร่างกายในข้อใดต่อไปนี้อธิบายได้ถูกต้อง", a: [ "Dorsiflexion คือการเหยียดเท้าออกจากกระดูกขา (กดปลายเท้าลง)", "Supination คือการบิดข้อมือไปด้านกระดูก radius", "Pronation คือการหมุนกระดูกปลายแขนเพื่อคว่ำฝ่ามือลง", "Eversion คือการบิดข้อเท้าเพื่อหมุนฝ่าเท้าเข้าหาแกนกลางของร่างกาย", "Plantarflexion คือการกระดกปลายเท้าขึ้นหาหน้าแข้ง" ], ans: 3 },
                 { id: 30, q: "ปุ่มปรับ Time Gain Compensation (TGC) ในเครื่อง Ultrasound ใช้สำหรับการปรับสิ่งใด", a: [ "ปรับเพิ่ม-ลด Impedance ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม-ลด Frequency ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม-ลด Amplitude (Gain) ของสัญญาณสะท้อนกลับตามความลึก เพื่อชดเชยการลดทอนพลังงาน", "ปรับเพิ่ม-ลด Resistance ของคลื่นเสียงตามความลึก", "ปรับเพิ่ม-ลด Interface ของคลื่นเสียงตามความลึก" ], ans: 3 },
@@ -204,7 +236,7 @@
                 { id: 51, q: "ข้อใดเป็นเทคนิคและวิธีการสร้างภาพเอกซเรย์คอมพิวเตอร์สมอง (CT Brain) ที่เหมาะสมที่สุดสำหรับผู้ป่วยอุบัติเหตุจักรยานยนต์ (Trauma)", a: [ "CT brain with contrast media, Soft tissue reconstruction", "CT brain with contrast media, Soft tissue and bone reconstruction", "CT brain without contrast media, Soft tissue and bone reconstruction", "CT brain without contrast media, Bone reconstruction", "CT brain without contrast media, Soft tissue reconstruction" ], ans: 3 },
                 { id: 52, q: "เมื่อมีผู้ป่วยที่ได้รับการฝังเครื่องกระตุ้นหัวใจ (Cardiac pacemaker) มานัดตรวจด้วยเครื่อง MRI นักรังสีเทคนิคควรปฏิบัติอย่างไรเป็นลำดับแรกอย่างปลอดภัยที่สุด", a: [ "อธิบายผู้ป่วยแล้วทำเรื่องปฏิเสธการตรวจและไม่รับนัด", "ปฏิเสธและไม่รับนัดในทันทีโดยไม่ชี้แจง", "รับนัดผู้ป่วยโดยให้ลงนามใบยินยอมรับความเสี่ยงอันตรายทันที", "รับตรวจผู้ป่วยตามขั้นตอนปกติเหมือนผู้ป่วยทั่วไป", "ให้ผู้ป่วยและแพทย์ร่วมตรวจสอบชนิดและรุ่นของ Pacemaker ว่าเป็นรุ่นที่รองรับ MRI (MR Conditional) หรือไม่ก่อน" ], ans: 5 },
                 { id: 53, q: "เมื่อกำหนดให้ค่าปริมาณรังสีรวมคงเดิม การปรับปัจจัยในข้อใดจะช่วยทำให้ Contrast หรือความตัดกันของภาพเอกซเรย์เพิ่มขึ้น", a: [ "Film speed", "Grid ratio (เพิ่มอัตราส่วนกริดเพื่อตัดรังสีกระเจิง)", "Focal spot size", "Field size", "Screen speed" ], ans: 2 },
-                { id: 54, q: "จากภาพโครงสร้างกระดูกเท้า ตำแหน่งหมายเลข 3 และ 4 คือกระดูกชิ้นใดตามลำดับ",img: "https://lh3.googleusercontent.com/d/1w6HscsYubbwZbqPnfWeBE91SNCJ_Kcv_", a: [ "Cuboid, Talus", "Navicular, Talus", "Navicular, Calcaneus", "Cuboid, Calcaneus", "Calcaneus, Talus" ], ans: 3 },
+                { id: 54, q: "fromภาพโครงสร้างกระดูกเท้า ตำแหน่งหมายเลข 3 และ 4 คือกระดูกชิ้นใดตามลำดับ",img: "https://lh3.googleusercontent.com/d/1w6HscsYubbwZbqPnfWeBE91SNCJ_Kcv_", a: [ "Cuboid, Talus", "Navicular, Talus", "Navicular, Calcaneus", "Cuboid, Calcaneus", "Calcaneus, Talus" ], ans: 3 },
                 { id: 55, q: "ผู้ป่วยได้รับอุบัติเหตุกะโหลกศีรษะร้าว (Skull fracture) เมื่อตรวจด้วย CT scan แบบไม่ฉีดสารทึบรังสี มักจะพบพยาธิสภาพเลือดออกเหนือเยื่อหุ้มสมองชั้นหนาที่มีลักษณะเด่นแบบข้อใด",img: "https://lh3.googleusercontent.com/d/1_M-ijAEXNdv3tmG3yTEZc80RpgTrvpr4", a: [ "Epidural hemorrhage (EDH)", "Aneurysm", "Intracranial hemorrhage", "Subarachnoid hemorrhage", "Subdural hemorrhage" ], ans: 1 },
                 { id: 56, q: "การจับคู่ระหว่างจุดอ้างอิงบนผิวร่างกาย (Surface landmark) และ โครงสร้างกระดูกภายในร่างกาย (Body structure) คู่ใดต่อไปนี้ ไม่สอดคล้องกัน", a: [ "Iliac crest / L4", "Xiphoid process / T10", "Jugular notch / T2-T3", "Anterior superior iliac spine (ASIS) / S1-S2", "Vertebral prominens / C7" ], ans: 4 }
             ],
@@ -218,18 +250,18 @@
                 { id: 7, q: "ข้อใดกล่าวถึงความหมายของ Health Level 7 (HL7) ได้ถูกต้องที่สุด", a: [ "เป็นโปรแกรมเก็บข้อมูลทางการแพทย์และแผนกรังสี", "เป็นมาตรฐานการแบ่งปันข้อมูลและการแลกเปลี่ยนข้อมูลทางการแพทย์", "เป็นโปรแกรมเก็บข้อมูลของแผนกรังสี", "เป็นระบบปฏิบัติการที่ใช้ในแผนกรังสี", "เป็นโปรแกรมเก็บข้อมูลทางการแพทย์" ], ans: 2 },
                 { id: 8, q: "ภาวะที่มีอากาศอยู่ใน peritoneal cavity (ช่องท้อง) คือข้อใด", a: [ "Pneumothorax", "Pneumoperitoneum", "Volvulus", "Ileus", "Ascites" ], ans: 2 },
                 { id: 9, q: "ข้อใดต่อไปนี้คือสิ่งแปลกปลอม (Artifact) ของการตรวจ Ultrasound ที่มีลักษณะเงาคล้ายบันไดเรียงซ้อนลงไป", a: [ "Displacement", "Shadowing", "Distortion", "Enhancement", "Reverberation" ], ans: 5 },
-                { id: 10, q: "การทำ Calcium scoring ในภาพเอกซเรย์คอมพิวเตอร์ (CT) ใช้สำหรับประเมินพยาธิสภาพใด", a: [ "Cerebral artery stenosis", "Brain viability", "Brain calcification", "Lung nodule", "Coronary artery calcification" ], ans: 5 },
+                { id: 10, q: "การตรวจ Calcium scoring ในภาพเอกซเรย์คอมพิวเตอร์ (CT) ใช้สำหรับประเมินพยาธิสภาพใด", a: [ "Cerebral artery stenosis", "Brain viability", "Brain calcification", "Lung nodule", "Coronary artery calcification" ], ans: 5 },
                 { id: 11, q: "ข้อใด ไม่ใช่ ข้อบ่งชี้สำหรับการตรวจเอกซเรย์คอมพิวเตอร์สมอง (CT Brain)", a: [ "Cerebral hemorrhage", "Head injury", "Seizure disorder", "Anxiety", "Stroke" ], ans: 4 },
                 { id: 12, q: "ข้อใดเป็นเทคนิคการทำหัตถการชนิด Non-vascular interventional radiology (รังสีร่วมรักษาชนิดไม่ใช่เส้นเลือด)", a: [ "PTBD, TACE, Biopsy", "PTBD, PCD, TIPS", "PCD, Biopsy, TACE", "TIPS, PCD, Biopsy", "PTBD, PCD, Biopsy" ], ans: 5 },
-                { id: 13, q: "จากภาพรังสีทรวงอกท่า PA ความผิดปกติที่พบ (ลูกศรชี้บริเวณปอดขวาล่างที่มีความทึบรังสีสูงขอบบนโค้งเว้า) คือข้อใด",img: "https://lh3.googleusercontent.com/d/1N2XlGuPSsEoH9GR-8wrvsdontrjZdA9H", a: [ "Atelectasis", "Pleural effusion", "Pneumonia", "Emphysema", "Pneumothorax" ], ans: 2 },
+                { id: 13, q: "fromภาพรังสีทรวงอกท่า PA ความผิดปกติที่พบ (ลูกศรชี้บริเวณปอดขวาล่างที่มีความทึบรังสีสูงขอบบนโค้งเว้า) คือข้อใด",img: "https://lh3.googleusercontent.com/d/1N2XlGuPSsEoH9GR-8wrvsdontrjZdA9H", a: [ "Atelectasis", "Pleural effusion", "Pneumonia", "Emphysema", "Pneumothorax" ], ans: 2 },
                 { id: 14, q: "กรณีที่นักรังสีเทคนิคทำการเปลี่ยนโปรโตคอลการสแกนในส่วนของ data acquisition จาก 64 x 0.6 mm เป็น 64 x 1.5 mm ส่วนใดของเครื่อง CT 64-slice ที่จะทำหน้าที่กำหนด slice width ดังกล่าว", a: [ "Focal spot", "Post-patient collimator", "Bowtie filter", "Detector", "Pre-patient collimator" ], ans: 5 },
                 { id: 15, q: "การตรวจทางรังสีวิทยาใดที่ควรเลือกใช้สารทึบรังสีชนิดไอโอดีน (Iodinated contrast material)", a: [ "Gastritis", "Mass at proximal ilium", "Stomach pain", "Bowel perforate", "Esophagitis" ], ans: 4 },
                 { id: 16, q: "ผู้ป่วยประสบอุบัติเหตุได้รับบาดเจ็บตรงบริเวณกระดูกท้ายทอย (Occipital bone) การจัดท่าสำหรับการถ่ายภาพทางรังสีท่าใดเหมาะสมและปลอดภัยที่สุด", a: [ "Submento-vertex projection", "Water's method", "Towne's method", "Rhese's method", "Posteroanterior projection (PA)" ], ans: 3 },
                 { id: 17, q: "ถ้าต้องการสร้างภาพ MRI ที่สามารถแยกแยะระหว่างเนื้อเยื่อปกติและรอยโรค (Pathology) ได้ชัดเจนที่สุด ควรเลือกใช้ Pulse sequence ในข้อใด", a: [ "T1-weighted และ Proton density", "T1-weighted with turbo spin", "T2-weighted", "Proton density", "T1-weighted" ], ans: 3 },
                 { id: 18, q: "เครื่องเอกซเรย์ในข้อใดที่จำเป็นต้องเลือกใช้หลอดเอกซเรย์แบบ Grid control x-ray tube", a: [ "Mobile Radiography", "Mammography", "Tomography", "Digital Subtraction Angiography (DSA)", "Computed Radiography (CR)" ], ans: 4 },
-                { id: 19, q: "จากภาพการตรวจระบบลำไส้ใหญ่ด้วยสารทึบรังสี (Barium enema) ตำแหน่งหมายเลข 2 ที่ลูกศรชี้คือข้อใด",img: "https://lh3.googleusercontent.com/d/1rMr2zt0CIt6tg3eawJ1reLGXllp8khIC", a: [ "Ascending colon", "Sigmoid colon", "Descending colon", "Cecum", "Transverse colon" ], ans: 5 },
+                { id: 19, q: "fromภาพการตรวจระบบลำไส้ใหญ่ด้วยสารทึบรังสี (Barium enema) ตำแหน่งหมายเลข 2 ที่ลูกศรชี้คือข้อใด",img: "https://lh3.googleusercontent.com/d/1rMr2zt0CIt6tg3eawJ1reLGXllp8khIC", a: [ "Ascending colon", "Sigmoid colon", "Descending colon", "Cecum", "Transverse colon" ], ans: 5 },
                 { id: 20, q: "การถ่ายภาพรังสีทรวงอกในท่าหรือ Projection ใด ที่สามารถแสดงรอยโรคก้อนเนื้อที่บริเวณยอดปอด (Apical lung mass) ได้ดีที่สุดโดยไม่ถูกกระดูกไหปลาร้าบัง", a: [ "AP upright", "AP supine", "Lateral decubitus", "Lordotic view", "PA upright" ], ans: 4 },
-                { id: 21, q: "จากภาพเอกซเรย์ข้อศอก (Elbow joint) ท่า Lateral ตำแหน่งหมายเลข 1, 2 และ 3 คือกระดูกชิ้นใดตามลำดับ",img: "https://lh3.googleusercontent.com/d/1VulzlDPGKoEbtA_nIj3AwPimNm_CrS3_", a: [ "Femur, ulna, radius", "Femur, tibia, fibula", "Femur, radius, ulna", "Humerus, ulna, radius", "Humerus, radius, ulna" ], ans: 4 },
+                { id: 21, q: "fromภาพเอกซเรย์ข้อศอก (Elbow joint) ท่า Lateral ตำแหน่งหมายเลข 1, 2 และ 3 คือกระดูกชิ้นใดตามลำดับ",img: "https://lh3.googleusercontent.com/d/1VulzlDPGKoEbtA_nIj3AwPimNm_CrS3_", a: [ "Femur, ulna, radius", "Femur, tibia, fibula", "Femur, radius, ulna", "Humerus, ulna, radius", "Humerus, radius, ulna" ], ans: 4 },
                 { id: 22, q: "ตามหลักการตรวจ Ultrasound ส่วนของเนื้อภาพที่อยู่ใต้ต่อถุงน้ำในตับ (Liver cyst) จะปรากฏลักษณะแบบใด", a: [ "Twinkle artifact", "Posterior enhancement (ความสว่างเพิ่มขึ้นด้านหลัง)", "Mirror artifact", "Posterior shadowing", "Reverberation artifact" ], ans: 2 },
                 { id: 23, q: "จากเดิมถ่ายภาพเอกซเรย์ปอดด้วยเทคนิค 100 kVp 6 mAs ถ้าต้องการปรับให้ภาพมีลักษณะ long scale contrast (เฉดสีเทากว้าง) และผู้ป่วยได้รับปริมาณรังสีน้อยที่สุด เทคนิคข้อใดเหมาะสมที่สุด", a: [ "115 kVp 3 mAs", "115 kVp 6 mAs", "110 kVp 6 mAs", "110 kVp 4 mAs", "110 kVp 3 mAs" ], ans: 1 },
                 { id: 24, q: "ข้อใดคือสิ่งที่นักรังสีเทคนิคควรปฏิบัติ เมื่อแผ่นตัวรับภาพ IP (Imaging Plate) ของระบบ CR ไม่ได้ถูกเปิดใช้งานเกิน 8 ชั่วโมง", a: [ "Secondary erasure", "Primary erasure (ล้างสัญญาณรังสีฉากหลังที่ค้างอยู่)", "Plate throughput", "Plate clean up", "Plate calibration" ], ans: 2 },
@@ -237,7 +269,7 @@
                 { id: 26, q: "ในกรณีที่ผู้ป่วยโรคสมองขาดเลือด (Cerebral infarction) มาตรวจ CT brain non-contrast เพื่อติดตามอาการหลังเกิดโรค 1 เดือน จะพบลักษณะของรอยโรค (Lesion) เป็นอย่างไร", a: [ "Lesion จะเป็น Hypodensity มี ring enhancement ชัดเจน", "Lesion จะเป็น Hyperdensity ค่า CT number ใกล้เคียงกับ Hemorrhage", "Lesion จะเป็น Hypodensity แต่มีความโปร่งรังสีสูงขึ้นใกล้เคียงหรือสูงกว่า CSF เล็กน้อย", "Lesion จะเป็น Hyperdensity มี ring enhancement ชัดเจน", "Lesion จะเป็น Hyperdensity ทั้งก้อน" ], ans: 3 },
                 { id: 27, q: "ข้อใดเป็นท่าถ่ายภาพเอกซเรย์ที่เป็นท่ามาตรฐานหรือRoutine ในการตรวจเต้านม (Mammography)", a: [ "Craniocaudal และ Mediolateral", "Craniocaudal และ Mediolateral oblique (CC & MLO)", "Caudocranial และ Mediolateral oblique", "Caudocranial และ Mediolateral", "Craniocaudal และ Lateromedial" ], ans: 2 },
                 { id: 28, q: "การปรับตั้งค่าพารามิเตอร์ให้ค่าแรงดันไฟฟ้า (kVp) สูงขึ้นจากค่าเดิม จะส่งผลกระทบอย่างไรต่อคุณภาพของภาพรังสี", a: [ "Contrast เท่าเดิม Density เพิ่มขึ้น", "Contrast เพิ่มขึ้น Density เท่าเดิม", "Contrast ลดลง Density เพิ่มขึ้น", "Contrast เพิ่มขึ้น Density เพิ่มขึ้น", "Contrast ลดลง Density ลดลง" ], ans: 3 },
-                { id: 29, q: "โครงสร้างปุ่มกระดูกตาตุ่มนอก (Lateral malleolus) จัดเป็นส่วนประกอบของกระดูกชิ้นใด", a: [ "Ulna", "Fibula", "Humerus", "Talus", "Tibia" ], ans: 2 },
+                { id: 29, q: "โครงสร้างเส้นปุ่มกระดูกตาตุ่มนอก (Lateral malleolus) จัดเป็นส่วนประกอบของกระดูกชิ้นใด", a: [ "Ulna", "Fibula", "Humerus", "Talus", "Tibia" ], ans: 2 },
                 { id: 30, q: "ขนาดของจุดภาพ (Pixel size) มีผลกระทบโดยตรงต่อคุณภาพของภาพเอกซเรย์ในระบบ Digital Radiography ตามข้อใด", a: [ "Gray scale", "Noise", "Resolution (Spatial resolution)", "Density", "Contrast" ], ans: 3 },
                 { id: 31, q: "อวัยวะในกลุ่มข้อใดต่อไปนี้ ทั้งหมดวางตัวอยู่ในช่องท้อง (Abdominal cavity)", a: [ "Liver, spleen และ stomach", "Heart และ lungs", "Testes และ ovaries", "Vocal fold และ larynx", "Reproductive organs และ urinary bladder" ], ans: 1 },
                 { id: 32, q: "ระยะเวลาที่ใช้ในการกวาดสัญญาณสร้างภาพของเครื่อง MRI (Scan time) ขึ้นอยู่กับตัวแปรหลักในข้อใด", a: [ "TR, NEX", "TE, NEX, number of frequency", "TR, NEX, slice thickness", "TR, NEX, number of frequency encoding", "TR, NEX, number of phase encoding" ], ans: 5 },
@@ -245,13 +277,13 @@
                 { id: 34, q: "หากแพทย์สงสัยภาวะมีน้ำในโพรงเยื่อหุ้มปอดปริมาณเล็กน้อยในปอดด้านซ้าย (Minimal Left Pleural effusion) นักรังสีเทคนิคควรถ่ายภาพรังสีทรวงอกในท่าใด จึงจะช่วยให้ตรวจพบรอยโรคได้ดีที่สุด", a: [ "Left lateral", "Lordotic", "Right lateral decubitus", "Left lateral decubitus (นอนตะแคงเอาข้างซ้ายลงต่ำ)", "PA upright" ], ans: 4 },
                 { id: 35, q: "ปรากฏการณ์ความไวต่อการรบกวนของสนามแม่เหล็ก (Magnetic susceptibility หรือ T2* effect) จะตรวจพบหรือแสดงผลได้ชัดเจนเมื่อเลือกใช้ MR pulse sequence ในข้อใด", a: [ "IR (Inversion recovery)", "FSE (Fast spin echo)", "GRE (Gradient echo)", "CINE", "EPI (Echo planar imaging)" ], ans: 3 },
                 { id: 36, q: "ปุ่มตำแหน่งอ้างอิงบนผิวร่างกาย (Bony landmark) ข้อใดที่วางตัวอยู่ตรงกับระดับของกระดูกสันหลังส่วนอกข้อ T4-T5", a: [ "Xiphoid process", "Vertebral prominence", "Sternal angle (มุมกระดูกอก)", "Suprasternal notch", "Iliac crest" ], ans: 3 },
-                { id: 37, q: "ข้อต่อที่อยู่ระหว่างกระดูกนิ้วมือชิ้นแรกส่วนต้น (Proximal phalanx) และส่วนปลาย (Distal phalanx) ของนิ้วหัวแม่มือ (Thumb) คือข้อใด", a: [ "Proximal interphalangeal joint", "Distal interphalangeal joint", "Carpometacarpal joint", "Interphalangeal joint (IP joint)", "Metacarpophalangeal joint" ], ans: 4 },
+                { id: 37, q: "ข้อใดคือข้อต่อที่อยู่ระหว่างกระดูกนิ้วมือชิ้นแรกส่วนต้น (Proximal phalanx) และส่วนปลาย (Distal phalanx) ของนิ้วหัวแม่มือ (Thumb) คือข้อใด", a: [ "Proximal interphalangeal joint", "Distal interphalangeal joint", "Carpometacarpal joint", "Interphalangeal joint (IP joint)", "Metacarpophalangeal joint" ], ans: 4 },
                 { id: 38, q: "การใช้งานเครื่อง Ultrasound ด้วยฟังก์ชันการทำงานแบบ Tissue Harmonic Imaging (THI) มีความเหมาะสมและช่วยเพิ่มประสิทธิภาพสูงสุดสำหรับการตรวจหารอยโรคในข้อใด", a: [ "Isoechoic lesion", "Stone", "Cyst", "Hyperechoic lesion", "Hemangioma" ], ans: 3 },
-                { id: 40, q: "เจลสื่อคลื่นเสียง (Acoustic Gel) มีบทบาทหน้าที่ช่วยในการตรวจคลื่นความถี่สูง (Ultrasound) ในแง่ใดมากที่สุด", a: [ "ช่วยให้เสียงมีพลังงานมากขึ้น", "ช่วยเพิ่มความยาวของคลื่นมากขึ้น", "ช่วยให้คลื่นเสียงส่งผ่านรอยต่อ (Interface) ระหว่างหัวตรวจกับผิวหนังได้ดีโดยการไล่อากาศออก", "ช่วยเพิ่มการสะท้อนคลื่นเสียงมากขึ้น", "ช่วยให้คลื่นเสียงมีความถี่สูงขึ้น" ], ans: 3 },
+                { id: 40, q: "เจลสื่อคลื่นเสียง (Acoustic Gel) มีบทบาทหน้าที่ช่วยในการตรวจคลื่นความถี่สูง (Ultrasound) ในแแง่ใดมากที่สุด", a: [ "ช่วยให้เสียงมีพลังงานมากขึ้น", "ช่วยเพิ่มความยาวของคลื่นมากขึ้น", "ช่วยให้คลื่นเสียงส่งผ่านรอยต่อ (Interface) ระหว่างหัวตรวจกับผิวหนังได้ดีโดยการไล่อากาศออก", "ช่วยเพิ่มการสะท้อนคลื่นเสียงมากขึ้น", "ช่วยให้คลื่นเสียงมีความถี่สูงขึ้น" ], ans: 3 },
                 { id: 41, q: "สัญญาณภาพฝังตัว (Latent image) ที่เกิดขึ้นบนแผ่น Imaging plate ของระบบ CR จะถูกอ่านสัญญาณออกมาเป็นข้อมูลภาพดิจิทัลได้โดยวิธีการใด", a: [ "กระตุ้นด้วยรังสีเอกซ์", "กระตุ้นด้วยแสงเลเซอร์ในช่วงคลื่นแสงสีแดง (Red laser)", "กระตุ้นด้วยความร้อน", "กระตุ้นด้วยเลเซอร์ช่วงสีน้ำเงิน", "กระตุ้นด้วยแสงธรรมดา" ], ans: 2 },
                 { id: 42, q: "ผู้ป่วยประสบอุบัติเหตุบริเวณข้อมือ หากต้องการถ่ายภาพรังสีเพื่อดูพยาธิสภาพหรือรอยแตกหักของกระดูก Scaphoid แต่พบว่าการถ่ายภาพท่าพื้นฐาน PA และ Lateral ยังไม่เห็นรอยหักชัดเจน ควรจัด Position ของมือเพิ่มเติมในท่าใด", a: [ "PA Radial deviation", "AP oblique", "PA oblique", "PA Ulnar deviation", "Carpal tunnel view" ], ans: 4 },
                 { id: 43, q: "ผู้ป่วยประสบอุบัติเหตุทางรถยนต์ พบว่ามีอาการปัสสาวะเป็นเลือดปน และสงสัยภาวะกระเพาะปัสสาวะฉีกขาด (Rupture bladder) การตรวจทางรังสีวิทยาข้อใดมีความจำเพาะเหมาะสมที่สุด", a: [ "Voiding cystourethrography", "Retrograde pyelography", "Cystography", "Antegrade pyelography", "Intravenous pyelography" ], ans: 3 },
-                { id: 44, q: "จากภาพเอกซเรย์คอมพิวเตอร์ (CT scan) ทรวงอกตัดขวาง ตำแหน่งที่ลูกศรชี้ (เส้นเลือดใหญ่ที่ออกจากหัวใจห้องล่างขวาไปปอด) คืออะไร",img: "image/Screenshot_13-7-2026_132218_.jpeg", a: [ "Left superior pulmonary vein", "Arch of aorta", "Left pulmonary artery", "Right superior pulmonary vein", "Pulmonary trunk" ], ans: 5 },
+                { id: 44, q: "fromภาพเอกซเรย์คอมพิวเตอร์ (CT scan) ทรวงอกตัดขวาง ตำแหน่งที่ลูกศรชี้ (เส้นเลือดใหญ่ที่ออกจากหัวใจห้องล่างขวาไปปอด) คืออะไร",img: "image/Screenshot_13-7-2026_132218_.jpeg", a: [ "Left superior pulmonary vein", "Arch of aorta", "Left pulmonary artery", "Right superior pulmonary vein", "Pulmonary trunk" ], ans: 5 },
                 { id: 45, q: "สนามแม่เหล็กหลัก (B0) ที่สร้างขึ้นมาจากเทคโนโลยีในข้อใด ที่สามารถให้ขนาดและกำลังของความเข้มสนามแม่เหล็กสูงที่สุดในงานวิจัยและการวินิจฉัย", a: [ "ขดลวดแม่เหล็กไฟฟ้า", "แท่งแม่เหล็กชั่วคราว", "ขดลวดตัวนำยิ่งยวด (Superconducting magnet)", "ขดลวดต้านทาน", "แท่งแม่เหล็กถาวร" ], ans: 3 },
                 { id: 46, q: "ในกรณีที่มีกระดูกฝ่ามือชิ้นที่ 3 หัก (3rd Metacarpal fracture) ท่าถ่ายภาพรังสีข้อใดที่แสดงให้เห็นขอบและรอยแตกหักแยกตัวได้ชัดเจนดีที่สุด", a: [ "AP, Lateral", "PA Oblique, Lateral", "PA, Lateral", "AP Oblique, Lateral", "PA, PA Oblique" ], ans: 2 },
                 { id: 47, q: "ในภาพการตรวจอัลตราซาวด์ (Ultrasound) ลักษณะเนื้อภาพที่ปรากฏอยู่บริเวณใต้ต่อก้อนนิ่วในถุงน้ำดี (Gallstone) จะมีลักษณะจำเพาะแบบใด", a: [ "Acoustic enhancement", "Hyperechoic", "Acoustic shadowing", "Anechoic", "Hypoechoic" ], ans: 3 },
@@ -270,6 +302,12 @@
         let activeYear = "64";
         let liveExamData = JSON.parse(JSON.stringify(rawExamData)); 
         let userAnswers = {}; 
+
+        // ตัวแปรควบคุมระบบจับเวลา (Exam Mode State)
+        let isExamMode = false;
+        let isExamSubmitted = false;
+        let examTimer = null;
+        let remainingTime = 0;
 
         // ==========================================================
         // 2. ตั้งค่าการเชื่อมต่อโปรเจกต์ FIREBASE ของเบียร์
@@ -316,7 +354,7 @@
                                 });
                             }
                         }
-                        resetCurrentYearData();
+                        if (!isExamMode) resetCurrentYearData();
                     }
                     renderQuiz();
                 });
@@ -332,6 +370,7 @@
                 item.originalChoices = [...item.a]; 
             });
             userAnswers = {}; 
+            document.getElementById('question-count').innerText = `${liveExamData[activeYear].length} ข้อ`;
         }
 
         // ==========================================================
@@ -374,18 +413,127 @@
             activeBtn.classList.add('bg-white', 'text-blue-700', 'shadow-md');
 
             document.getElementById('current-year-title').innerText = `ชุดข้อสอบประจำปี 25${year === '64' ? '64' : year === '65' ? '65' : '66'}`;
+            
+            if (isExamMode) exitExam();
             resetCurrentYearData();
             renderQuiz();
         }
 
-        // ฟังก์ชันเมื่อคลิกเลือกช้อยส์ (จุดหลักที่อัปเดตใหม่เพื่อให้กดเปลี่ยนคำตอบกี่รอบก็ได้)
+        // ฟังก์ชันควบคุมโหมดจับเวลา ⏳
+        function toggleExamMode() {
+            const list = liveExamData[activeYear];
+            if (!isExamMode) {
+                if (confirm(`คุณเบียร์ต้องการเปิดโหมดจับเวลาใช่ไหม?\nระบบจะให้เวลาข้อละ 1 นาที (รวมชุดนี้คือ ${list.length} นาที) เมื่อทำครบให้กดส่งข้อสอบด้านล่างเพื่อตรวจคะแนนครับ`)) {
+                    isExamMode = true;
+                    isExamSubmitted = false;
+                    userAnswers = {};
+                    document.getElementById('result-card').classList.add('hidden');
+                    document.getElementById('submit-area').classList.remove('hidden');
+                    document.getElementById('timer-dashboard').classList.remove('hidden');
+                    
+                    document.getElementById('btn-exam-mode').innerHTML = `<i class="fa-solid fa-circle-stop"></i> ออกจากโหมดจับเวลา`;
+                    document.getElementById('btn-exam-mode').className = "w-full sm:w-auto px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition-all transform active:scale-95 whitespace-nowrap";
+                    document.getElementById('info-text').innerHTML = `<i class="fa-solid fa-stopwatch text-rose-500 mr-1"></i> <b>โหมดจับเวลา: เลือกคำตอบแล้วช้อยส์จะไฮไลต์เป็นสีฟ้า ระบบจะยังไม่เฉลยคำตอบจนกว่าจะกดส่งข้อสอบด้านล่างครับ</b>`;
+                    
+                    remainingTime = list.length * 60; // 60 วินาทีต่อข้อ
+                    updateClock();
+                    
+                    clearInterval(examTimer);
+                    examTimer = setInterval(() => {
+                        remainingTime--;
+                        updateClock();
+                        if (remainingTime <= 0) {
+                            clearInterval(examTimer);
+                            alert("⏰ หมดเวลาทำข้อสอบแล้ว! ระบบจะส่งกระดาษคำตอบและคำนวณคะแนนให้คุณโดยอัตโนมัติ");
+                            processScore();
+                        }
+                    }, 1000);
+                    
+                    renderQuiz();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } else {
+                if (confirm("คุณเบียร์ต้องการยกเลิกโหมดจับเวลาและกลับสู่โหมดฝึกฝนปกติใช่ไหม? (คะแนนที่ทำมาจะถูกเคลียร์)")) {
+                    exitExam();
+                }
+            }
+        }
+
+        function updateClock() {
+            const min = Math.floor(remainingTime / 60);
+            const sec = remainingTime % 60;
+            document.getElementById('countdown-clock').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            
+            if (remainingTime < 60) {
+                document.getElementById('timer-dashboard').className = "bg-rose-600 text-white sticky top-[68px] z-30 shadow-sm transition-all";
+            } else {
+                document.getElementById('timer-dashboard').className = "bg-amber-500 text-white sticky top-[68px] z-30 shadow-sm transition-all";
+            }
+        }
+
+        function exitExam() {
+            isExamMode = false;
+            isExamSubmitted = false;
+            clearInterval(examTimer);
+            userAnswers = {};
+            document.getElementById('submit-area').classList.add('hidden');
+            document.getElementById('timer-dashboard').classList.add('hidden');
+            document.getElementById('result-card').classList.add('hidden');
+            
+            document.getElementById('btn-exam-mode').innerHTML = `<i class="fa-solid fa-hourglass-start"></i> เริ่มโหมดจับเวลา (Exam Mode)`;
+            document.getElementById('btn-exam-mode').className = "w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow flex items-center justify-center gap-2 transition-all transform active:scale-95 whitespace-nowrap";
+            document.getElementById('info-text').innerHTML = `<i class="fa-solid fa-circle-info text-blue-500 mr-1"></i> <b>โหมดปกติ: คลิกตัวเลือกเพื่อตรวจคำตอบทันที และกดเปลี่ยนช้อยส์ใหม่ได้ตลอดเวลาครับ</b>`;
+            
+            resetCurrentYearData();
+            renderQuiz();
+        }
+
+        function submitExam() {
+            const list = liveExamData[activeYear];
+            const currentAnswersCount = Object.keys(userAnswers).length;
+            
+            if (currentAnswersCount < list.length) {
+                if (!confirm(`⚠️ คุณเบียร์ยังทำไม่ครบทุกข้อ (ทำไปแล้ว ${currentAnswersCount} จากทั้งหมด ${list.length} ข้อ)\nยืนยันที่จะส่งกระดาษคำตอบเลยใช่ไหมครับ?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm("คุณเบียร์ตรวจทานครบถ้วนและต้องการส่งข้อสอบเพื่อตรวจคะแนนเลยใช่ไหมครับ?")) {
+                    return;
+                }
+            }
+            processScore();
+        }
+
+        function processScore() {
+            clearInterval(examTimer);
+            isExamSubmitted = true;
+            document.getElementById('submit-area').classList.add('hidden');
+            
+            const list = liveExamData[activeYear];
+            let totalCorrect = 0;
+            
+            list.forEach(item => {
+                if (userAnswers[item.id] !== undefined && userAnswers[item.id] === item.ans) {
+                    totalCorrect++;
+                }
+            });
+            
+            document.getElementById('score-display').innerText = `${totalCorrect} / ${list.length}`;
+            document.getElementById('result-card').classList.remove('hidden');
+            
+            renderQuiz();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ฟังก์ชันเมื่อคลิกเลือกช้อยส์
         function selectChoice(itemId, choiceNum) {
+            if (isExamSubmitted) return; // หากส่งข้อสอบแล้ว จะห้ามกดสลับคำตอบ
             userAnswers[itemId] = choiceNum; 
             renderQuiz(); 
         }
 
         // ==========================================================
-        // 4. ส่วนเรนเดอร์หน้าจอหลัก UI (เวอร์ชันรองรับรูปภาพแล้วครับคุณเบียร์ 🖼️)
+        // 4. ส่วนเรนเดอร์หน้าจอหลัก UI
         // ==========================================================
         function renderQuiz() {
             const container = document.getElementById('quiz-container');
@@ -409,7 +557,6 @@
                     <p class="font-semibold text-gray-800 text-base mb-4">${item.q}</p>
                 `;
 
-                // 🌟 เพิ่มจุดนี้: เช็กว่าถ้าในข้อมูลมีรูปภาพ (item.img) ให้สร้างแท็กรูปโชว์ขึ้นมา
                 if (item.img) {
                     html += `
                         <div class="mb-4 max-w-md mx-auto overflow-hidden rounded-lg border border-gray-200 shadow-sm bg-gray-50 flex justify-center items-center p-2">
@@ -427,13 +574,21 @@
                     
                     let borderStyle = 'border-gray-200 bg-gray-50 hover:bg-gray-100/70';
 
-                    if (hasAnswered) {
-                        if (isCorrectSolution) {
-                            borderStyle = 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold';
-                        } else if (isUserSelection && !isCorrectSolution) {
-                            borderStyle = 'border-red-400 bg-red-50 text-red-900 font-semibold';
-                        } else {
-                            borderStyle = 'border-gray-200 bg-gray-50/50 opacity-60';
+                    if (isExamMode && !isExamSubmitted) {
+                        // 🌟 ในระหว่างทำโหมดสอบ: แสดงสีฟ้าอ่อนข้อที่เลือกไว้ และสลับช้อยส์ได้อิสระ
+                        if (isUserSelection) {
+                            borderStyle = 'border-blue-500 bg-blue-50 text-blue-900 font-semibold ring-1 ring-blue-500';
+                        }
+                    } else {
+                        // โหมดปกติ หรือ โหมดสอบที่ส่งคำตอบตรวจคะแนนแล้ว
+                        if (hasAnswered) {
+                            if (isCorrectSolution) {
+                                borderStyle = 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold ring-1 ring-emerald-500';
+                            } else if (isUserSelection && !isCorrectSolution) {
+                                borderStyle = 'border-red-400 bg-red-50 text-red-900 font-semibold ring-1 ring-red-400';
+                            } else {
+                                borderStyle = 'border-gray-200 bg-gray-50/50 opacity-60';
+                            }
                         }
                     }
 
@@ -449,7 +604,8 @@
 
                 html += `</div>`;
 
-                if (hasAnswered) {
+                // เฉลยและประวัติคลาวด์จะโชว์ในโหมดปกติ หรือหลังจากที่โหมดสอบกดส่งกระดาษคำตอบตรวจแล้วเท่านั้น
+                if ((!isExamMode && hasAnswered) || (isExamMode && isExamSubmitted)) {
                     html += `
                         <div class="mt-2 text-xs border border-blue-200 bg-blue-50 text-blue-800 p-2.5 rounded-lg flex items-center gap-1.5 font-semibold animate-fade-in">
                             <i class="fa-solid fa-lightbulb text-amber-500 text-sm"></i> เฉลยคือข้อ ${item.ans}
